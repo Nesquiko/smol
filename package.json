@@ -1,5 +1,5 @@
 {
-  "name": "Smol",
+  "name": "smol",
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
@@ -17,6 +17,7 @@
     "@solidjs/router": "^0.15.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk-solid": "^1.1.2",
     "lucide-solid": "^0.562.0",
     "solid-js": "^1.9.11",
     "solid-motionone": "^1.0.4",

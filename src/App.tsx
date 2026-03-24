@@ -1,7 +1,13 @@
 import type { Component } from "solid-js";
+import {Route, Router} from "@solidjs/router";
+import {Home} from "~/components/home";
 
 const App: Component = () => {
-  return <h1>Hello world!!!!</h1>;
+  return (
+    <Router>
+      <Route path="/" component={Home} />
+    </Router>
+  );
 };
 
 export default App;
