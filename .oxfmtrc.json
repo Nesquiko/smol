@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": ["messages.ts"],
+  "experimentalSortImports": {},
+  "experimentalTailwindcss": {
+    "stylesheet": "./src/index.css",
+    "attributes": ["class", "inputClass"],
+    "functions": ["clsx", "cn", "cva"],
+    "preserveDuplicates": false,
+    "preserveWhitespace": false
+  }
+}
