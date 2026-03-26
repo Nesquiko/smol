@@ -1,7 +1,6 @@
 import {InputCommand} from "~/components/input-command";
 import {Accessor, createSignal, For, Show} from "solid-js";
 import {Card, CardContent} from "~/components/ui/card";
-import {formatLineNumber} from "~/lib/ui-utils";
 import {CodeLine} from "~/components/code-line";
 
 export type Token = {
@@ -11,34 +10,36 @@ export type Token = {
   colEnd: number;
 };
 
+const TOKENS_TEST: Array<Token> = [
+  {
+    type: "ident",
+    line: 6,
+    colStart: 2,
+    colEnd: 12,
+  } satisfies Token,
+  {
+    type: "ident",
+    line: 10,
+    colStart: 5,
+    colEnd: 8,
+  } satisfies Token,
+  {
+    type: "ident",
+    line: 13,
+    colStart: 5,
+    colEnd: 8,
+  } satisfies Token,
+  {
+    type: "ident",
+    line: 16,
+    colStart: 5,
+    colEnd: 8,
+  } satisfies Token,
+] satisfies Array<Token>;
+
 export const Home = () => {
   const [fileContent, setFileContent] = createSignal<string | undefined>(undefined);
-  const [tokens, setTokens] = createSignal<Array<Token>>([
-    {
-      type: "ident",
-      line: 6,
-      colStart: 2,
-      colEnd: 12,
-    } satisfies Token,
-    {
-      type: "ident",
-      line: 10,
-      colStart: 5,
-      colEnd: 8,
-    } satisfies Token,
-    {
-      type: "ident",
-      line: 13,
-      colStart: 5,
-      colEnd: 8,
-    } satisfies Token,
-    {
-      type: "ident",
-      line: 16,
-      colStart: 5,
-      colEnd: 8,
-    } satisfies Token,
-  ] satisfies Array<Token>);
+  const [tokens, setTokens] = createSignal<Array<Token>>(TOKENS_TEST);
   const [hoveredToken, setHoveredToken] = createSignal<Token | undefined>(undefined);
 
   return (
@@ -50,8 +51,8 @@ export const Home = () => {
           </div>
         )}>
           {(content: Accessor<string>) => {
-            const lines = () => content().split('\n');
-            const totalLines = () => lines().length;
+            const lines = (): Array<string> => content().split('\n');
+            const totalLines = (): number => lines().length;
 
             return (
               <div class="flex flex-row items-center justify-center gap-6 w-full h-screen p-6">
@@ -78,7 +79,7 @@ export const Home = () => {
                     <For each={tokens()}>
                       {(token: Token) => (
                         <span
-                          class="font-medium hover:bg-red-100"
+                          class="font-medium hover:bg-primary-700"
                           onMouseEnter={() => setHoveredToken(token)}
                           onMouseLeave={() => setHoveredToken(undefined)}
                         >
@@ -86,7 +87,6 @@ export const Home = () => {
                         </span>
                       )}
                     </For>
-                    <div>{hoveredToken()?.type}</div>
                   </CardContent>
                 </Card>
               </div>

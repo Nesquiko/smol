@@ -50,7 +50,6 @@ export const CodeLine: Component<CodeLineProps> = (props: CodeLineProps) => {
         {formatLineNumber(props.lineNum, props.totalLines)}
       </span>
       {renderLine()}
-      {lineTokens()?.[0]?.type ?? ""}
     </div>
   );
 };
