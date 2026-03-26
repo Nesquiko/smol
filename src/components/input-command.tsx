@@ -11,7 +11,7 @@ import {Button} from "~/components/ui/button";
 import {EXAMPLES, InputExample} from "~/lib/data/examples";
 
 interface InputCommandProps {
-  setFileContent: Setter<string | undefined>;
+  onInput: (text: string) => void;
 }
 
 export const InputCommand: Component<InputCommandProps> = (props: InputCommandProps) => {
@@ -26,7 +26,7 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
 
     const response: Response = await fetch(example.path + "?raw");
     const text: string = await response.text();
-    props.setFileContent(text);
+    props.onInput(text);
   };
 
   return (
