@@ -1,6 +1,6 @@
 import * as d3 from "d3";
-import { Accessor, Component, createEffect } from "solid-js";
-import { ParseTreeNode } from "~/components/home";
+import {Accessor, Component, createEffect} from "solid-js";
+import {ParseTreeNode} from "~/lib/types";
 
 interface ParseTreeProps {
   tree: Accessor<ParseTreeNode>;
@@ -47,7 +47,6 @@ export const ParseTree: Component<ParseTreeProps> = (
 
     const root = tree(hierarchy);
 
-    // Links
     const links = g
       .selectAll(".link")
       .data(root.links(), (d: any) => d.target.data.id);
@@ -76,12 +75,10 @@ export const ParseTree: Component<ParseTreeProps> = (
 
     links.exit().remove();
 
-    // Nodes
     const nodes = g
       .selectAll(".node")
       .data(root.descendants(), (d: any) => d.data.id);
 
-    // Only animate new nodes
     const nodeEnter = nodes
       .enter()
       .append("g")
@@ -109,7 +106,6 @@ export const ParseTree: Component<ParseTreeProps> = (
       .duration(500)
       .style("opacity", 1);
 
-    // Update existing nodes - just reposition
     nodes
       .transition()
       .duration(500)

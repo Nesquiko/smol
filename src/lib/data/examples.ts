@@ -7,7 +7,11 @@ export type InputExample = {
 
 export const EXAMPLES: Array<InputExample> = [
   {
-    name: "Example 1",
-    path: "/examples/example-1.smol",
+    name: "Simple Example",
+    path: "/examples/simple-example.txt",
+  } satisfies InputExample,
+  {
+    name: "Complex Example",
+    path: "/examples/complex-example.txt",
   } satisfies InputExample,
 ] satisfies Array<InputExample>;

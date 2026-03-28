@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import {ParseTreeNode} from "~/components/home";
+import {ParseTreeNode} from "~/lib/types";
 
 export const cn = (...inputs: Array<ClassValue>): string => {
   return twMerge(clsx(inputs));
@@ -14,7 +14,12 @@ export const formatLineNumber = (
   return lineNum.toString().padStart(width, ' ');
 };
 
-export const insertNodeAtRandom = (node: ParseTreeNode): { tree: ParseTreeNode; nodeId: string } => {
+export type NodeInsertResult = {
+  tree: ParseTreeNode;
+  nodeId: string;
+};
+
+export const insertNodeAtRandom = (node: ParseTreeNode): NodeInsertResult => {
   const nodeId = `node-${Date.now()}-${Math.random()}`;
   const newNode: ParseTreeNode = {
     id: nodeId,
