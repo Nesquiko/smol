@@ -1,7 +1,8 @@
 import { render } from "solid-js/web";
 import "solid-devtools";
-// oxlint-disable no-restricted-imports
+// eslint-disable-next-line no-restricted-imports
 import { name, version } from "../package.json";
+// eslint-disable-next-line no-restricted-imports
 import App from "./App";
 
 console.log(`Running ${name} v${version}`);
