@@ -2,21 +2,14 @@ import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
-import { Accessor, Component, createEffect, createSignal, For, onCleanup, Show } from "solid-js";
+import { Accessor, Component, createSignal, For, Show } from "solid-js";
 
 import { CodeLine } from "~/components/code-line";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import {
-  AUTO_MODE_SPEED_MS,
-  BLINK_DURATION,
-  KEYS_BACKWARD,
-  KEYS_FORWARD,
-  KEYS_NEXT,
-  KEYS_PREVIOUS,
-} from "~/lib/data/constants";
-import { ControlButton, Direction, Token } from "~/lib/types";
+import { useAutoStep } from "~/lib/hooks/use-auto-step";
+import { Caret, Token } from "~/lib/types";
 
 interface LexScreenProps {
   fileContent: Accessor<string | undefined>;
@@ -28,13 +21,9 @@ interface LexScreenProps {
 export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
   const [hoveredToken, setHoveredToken] = createSignal<Token | undefined>(undefined);
   const [buffer, setBuffer] = createSignal<Array<string>>([]);
-  const [autoModeDirection, setAutoModeDirection] = createSignal<Direction>("none");
-  const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(
-    undefined,
-  );
   const [pointer, setPointer] = createSignal<number>(0);
 
-  const normalizedContent = () => props.fileContent()?.replace(/\r\n/g, "\n") ?? "";
+  const normalizedContent = (): string => props.fileContent()?.replace(/\r\n/g, "\n") ?? "";
 
   let codeContainer: HTMLDivElement | undefined;
   let tokensContainer: HTMLDivElement | undefined;
@@ -50,63 +39,20 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
     }
   };
 
-  createEffect(() => {
-    const direction = autoModeDirection();
-    if (direction === "none") return;
-
-    const interval = setInterval(() => {
-      if (direction === "forward") nextStep();
-      else previousStep();
-    }, AUTO_MODE_SPEED_MS);
-
-    onCleanup(() => {
-      clearInterval(interval);
-    });
-  });
-
-  const blink = (button: ControlButton) => {
-    setLastPressedButton(button);
-    setTimeout(() => setLastPressedButton(undefined), BLINK_DURATION);
-  };
-
-  createEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (KEYS_PREVIOUS.includes(e.key)) {
-        blink("previous");
-        previousStep();
-      } else if (KEYS_NEXT.includes(e.key)) {
-        blink("next");
-        nextStep();
-      } else if (KEYS_FORWARD.includes(e.key)) {
-        blink("play");
-        setAutoModeDirection(autoModeDirection() === "none" ? "forward" : "none");
-      } else if (KEYS_BACKWARD.includes(e.key)) {
-        blink("play");
-        setAutoModeDirection(autoModeDirection() === "none" ? "backward" : "none");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    onCleanup(() => {
-      window.removeEventListener("keydown", handleKeyDown);
-    });
-  });
-
   const nextStep = () => {
     blink("next");
 
-    const currentIndex = pointer();
-    const text = normalizedContent();
+    const currentIndex: number = pointer();
+    const text: string = normalizedContent();
 
     if (!text) return;
 
     if (currentIndex >= text.length) return;
 
-    const nextChar = text[currentIndex];
+    const nextChar: string = text[currentIndex];
     console.log(JSON.stringify(nextChar));
 
-    setBuffer((prev) => [...prev, nextChar]);
+    setBuffer((prev: Array<string>): Array<string> => [...prev, nextChar]);
     setPointer(currentIndex + 1);
   };
 
@@ -119,8 +65,8 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
 
   const WINDOW_SIZE = 11;
 
-  const visibleBuffer = () => {
-    const buf = buffer();
+  const visibleBuffer = (): Array<string> => {
+    const buf: Array<string> = buffer();
 
     if (buf.length <= WINDOW_SIZE) {
       return [...buf, ...Array(WINDOW_SIZE - buf.length).fill("")];
@@ -129,16 +75,21 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
     return buf.slice(-WINDOW_SIZE);
   };
 
-  const isOverflowing = () => buffer().length > WINDOW_SIZE;
+  const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
+    nextStep,
+    previousStep,
+  );
 
-  const caretPosition = () => {
-    const text = normalizedContent();
-    const index = pointer();
+  const isOverflowing = (): boolean => buffer().length > WINDOW_SIZE;
 
-    let line = 1;
-    let col = 0;
+  const caretPosition = (): Caret => {
+    const text: string = normalizedContent();
+    const index: number = pointer();
 
-    for (let i = 0; i < index; i++) {
+    let line: number = 1;
+    let col: number = 0;
+
+    for (let i: number = 0; i < index; i++) {
       if (text[i] === "\n") {
         line++;
         col = 0;
@@ -147,7 +98,10 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
       }
     }
 
-    return { line, col };
+    return {
+      line,
+      col,
+    };
   };
 
   return (
@@ -155,7 +109,7 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
       {(content: Accessor<string>) => {
         const lines = (): Array<string> => content().split("\n");
         const totalLines = (): number => lines().length;
-        const tokensByLine = () => {
+        const tokensByLine = (): Map<number, Array<Token>> => {
           const map = new Map<number, Token[]>();
           props.tokens().forEach((token: Token) => {
             if (!map.has(token.line)) {
@@ -179,7 +133,7 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                   <div class="flex flex-col gap-0 py-3">
                     <For each={lines()}>
                       {(line: string, idx: Accessor<number>) => {
-                        const lineNum = () => idx() + 1;
+                        const lineNum = (): number => idx() + 1;
                         return (
                           <div class="h-6 flex-shrink-0 px-6 py-0">
                             <CodeLine
@@ -204,7 +158,7 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                   <div class="flex flex-col gap-0 py-3">
                     <For each={lines()}>
                       {(_: string, idx: Accessor<number>) => {
-                        const lineNum = () => idx() + 1;
+                        const lineNum = (): number => idx() + 1;
                         const tokensForLine = (): Array<Token> =>
                           tokensByLine().get(lineNum()) ?? [];
                         return (
@@ -238,8 +192,8 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                   </Show>
 
                   <For each={visibleBuffer()}>
-                    {(char: string, i) => {
-                      const isCurrent = () =>
+                    {(char: string, i: Accessor<number>) => {
+                      const isCurrent = (): boolean =>
                         buffer().length > 0 &&
                         i() === Math.min(buffer().length - 1, WINDOW_SIZE - 1);
 
