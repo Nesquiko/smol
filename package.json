@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite",
-    "lint": "eslint . --max-warnings=0",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --max-warnings=0 && oxfmt --check .",
     "format": "oxfmt",
     "dev": "vite",
     "build": "bun tsgo -b  && vite build",
