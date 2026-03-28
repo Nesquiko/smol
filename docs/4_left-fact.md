@@ -22,6 +22,10 @@
   - `expr_list` -> `expression` `expr_list'`
   - `expr_list'` -> e | _,_`expr_list`
 
+- `expression` -> `factor` | `expression` `op` `factor`
+  - `expression` -> `factor` `expression'`
+  - `expression'` -> e | `op` `factor` `expression'`
+
 - `factor` -> _(_`expression`_)_
 
 - `factor` -> `ident` | `number`

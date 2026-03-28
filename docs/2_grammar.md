@@ -16,6 +16,8 @@
 
 - `expr_list` -> `expression` | `expression`_,_`expr_list`
 
+- `expression` -> `factor` | `expression` `op` `factor`
+
 - `factor` -> _(_`expression`_)_
 
 - `factor` -> `ident` | `number`

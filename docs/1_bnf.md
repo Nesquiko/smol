@@ -16,6 +16,8 @@
 
 - `expr_list` := `expression`{","`expression`}.
 
+- `expression` := \[`expression` `op`\]`factor`.
+
 - `factor` := "("`expression`")".
 
 - `factor` := `ident` | `number`.
