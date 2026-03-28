@@ -1,15 +1,18 @@
-import {createSignal, Match, Switch} from "solid-js";
-import {InputScreen} from "~/screens/input-screen";
-import {LexScreen} from "~/screens/lex-screen";
-import {TOKENS_TEST} from "~/lib/data/test-data";
-import {Page, Result, Token} from "~/lib/types";
-import {SyntaxScreen} from "~/screens/syntax-screen";
-import {ResultsScreen} from "~/screens/results-screen";
+import { createSignal, Match, Switch } from "solid-js";
+
+import { TOKENS_TEST } from "~/lib/data/test-data";
+import { Page, Result, Token } from "~/lib/types";
+import { InputScreen } from "~/screens/input-screen";
+import { LexScreen } from "~/screens/lex-screen";
+import { ResultsScreen } from "~/screens/results-screen";
+import { SyntaxScreen } from "~/screens/syntax-screen";
 
 export const Home = () => {
   const [currentPage, setCurrentPage] = createSignal<Page>("input");
   const [fileContent, setFileContent] = createSignal<string | undefined>(undefined);
+  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   const [tokens, setTokens] = createSignal<Array<Token>>(TOKENS_TEST);
+  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   const [result, setResult] = createSignal<Result>("could-not-determine");
 
   const onInput = (text: string) => {
@@ -18,11 +21,11 @@ export const Home = () => {
   };
 
   return (
-    <div class="flex flex-1 min-h-screen w-full items-center justify-center">
-      <main class="flex flex-col w-full items-center justify-center">
+    <div class="flex min-h-screen w-full flex-1 items-center justify-center">
+      <main class="flex w-full flex-col items-center justify-center">
         <Switch>
           <Match when={currentPage() === "input"}>
-            <InputScreen onInput={onInput}/>
+            <InputScreen onInput={onInput} />
           </Match>
 
           <Match when={currentPage() === "lex"}>
@@ -42,10 +45,7 @@ export const Home = () => {
           </Match>
 
           <Match when={currentPage() === "results"}>
-            <ResultsScreen
-              result={result}
-              onBack={() => setCurrentPage("syntax")}
-            />
+            <ResultsScreen result={result} onBack={() => setCurrentPage("syntax")} />
           </Match>
         </Switch>
       </main>

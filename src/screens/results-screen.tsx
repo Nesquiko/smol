@@ -1,7 +1,8 @@
-import {Accessor, Component, Match, Show, Switch} from "solid-js";
-import {ChevronLeftIcon} from "lucide-solid";
-import {Button} from "~/components/ui/button";
-import {Result} from "~/lib/types";
+import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
+import { Accessor, Component, Match, Switch } from "solid-js";
+
+import { Button } from "~/components/ui/button";
+import { Result } from "~/lib/types";
 
 interface ResultsScreenProps {
   result: Accessor<Result>;
@@ -10,7 +11,7 @@ interface ResultsScreenProps {
 
 export const ResultsScreen: Component<ResultsScreenProps> = (props: ResultsScreenProps) => {
   return (
-    <div class="flex flex-1 min-h-screen w-full items-center justify-center relative">
+    <div class="relative flex min-h-screen w-full flex-1 items-center justify-center">
       <Switch>
         <Match when={props.result() === "could-not-determine"}>
           <span class="text-primary-300">Could not determine the correctness of the input.</span>
@@ -21,8 +22,8 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props: ResultsScree
         <div class="flex flex-col items-center justify-center gap-2">
           <span class="text-9xl font-bold text-primary-700 select-none">CORRECT</span>
           <span class="text-primary-300">
-          The input file that you chose has been marked as correct.
-        </span>
+            The input file that you chose has been marked as correct.
+          </span>
         </div>
       </Match>
 
@@ -30,18 +31,18 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props: ResultsScree
         <div class="flex flex-col items-center justify-center gap-2">
           <span class="text-9xl font-bold text-primary-700 select-none">INCORRECT</span>
           <span class="text-primary-300">
-          The input file that you chose has been marked as incorrect.
-        </span>
+            The input file that you chose has been marked as incorrect.
+          </span>
         </div>
       </Match>
 
       <Button
         variant="ghost"
         size="default"
-        class="cursor-pointer w-fit absolute left-6 bottom-6"
+        class="absolute bottom-6 left-6 w-fit cursor-pointer"
         onClick={props.onBack}
       >
-        <ChevronLeftIcon/>
+        <ChevronLeftIcon />
         Syntax analysis
       </Button>
     </div>

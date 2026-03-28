@@ -1,3 +1,6 @@
+import { Component, createSignal, For } from "solid-js";
+
+import { Button } from "~/components/ui/button";
 import {
   CommandDialog,
   CommandEmpty,
@@ -6,9 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/ui/command";
-import {Component, createSignal, For, Setter} from "solid-js";
-import {Button} from "~/components/ui/button";
-import {EXAMPLES, InputExample} from "~/lib/data/examples";
+import { EXAMPLES, InputExample } from "~/lib/data/examples";
 
 interface InputCommandProps {
   onInput: (text: string) => void;
@@ -33,11 +34,9 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
     <>
       <Button
         onClick={handleOpen}
-        class="w-full max-w-full overflow-hidden text-foreground bg-primary cursor-pointer"
+        class="w-full max-w-full cursor-pointer overflow-hidden bg-primary text-foreground"
       >
-        <span class="min-w-0 flex-1 truncate text-center">
-          Choose input file
-        </span>
+        <span class="min-w-0 flex-1 truncate text-center">Choose input file</span>
       </Button>
 
       <CommandDialog open={open()} onOpenChange={setOpen}>
@@ -49,7 +48,7 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
               {(example: InputExample) => (
                 <CommandItem
                   onSelect={() => handleSelect(example)}
-                  class="group flex flex-row items-center justify-start gap-0.5 py-2 cursor-pointer text-sm"
+                  class="group flex cursor-pointer flex-row items-center justify-start gap-0.5 py-2 text-sm"
                 >
                   {example.name}
                 </CommandItem>

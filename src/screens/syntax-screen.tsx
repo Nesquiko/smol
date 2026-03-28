@@ -1,17 +1,22 @@
-import {Accessor, Component, createEffect, createSignal, For, onCleanup, Show} from "solid-js";
-import {Card, CardContent} from "~/components/ui/card";
-import {ParseTree} from "~/components/parse-tree";
-import {Button} from "~/components/ui/button";
-import {ChevronLeftIcon, ChevronRightIcon, PauseIcon, PlayIcon} from "lucide-solid";
-import {ControlButton, Direction, ParseTreeNode} from "~/lib/types";
-import {TREE_TEST_SMALL} from "~/lib/data/test-data";
-import {insertNodeAtRandom, removeNodeById} from "~/lib/ui-utils";
+import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
+import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import PauseIcon from "lucide-solid/icons/pause";
+import PlayIcon from "lucide-solid/icons/play";
+import { Accessor, Component, createEffect, createSignal, For, onCleanup, Show } from "solid-js";
 
-const BLINK_DURATION: number = 100;
-const KEYS_PREVIOUS: Array<string> = ["ArrowLeft", "a", "A"];
-const KEYS_NEXT: Array<string> = ["ArrowRight", "d", "D"];
-const KEYS_FORWARD: Array<string> = ["ArrowUp", "w", "W"];
-const KEYS_BACKWARD: Array<string> = ["ArrowDown", "s", "s"];
+import { ParseTree } from "~/components/parse-tree";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import {
+  BLINK_DURATION,
+  KEYS_BACKWARD,
+  KEYS_FORWARD,
+  KEYS_NEXT,
+  KEYS_PREVIOUS,
+} from "~/lib/data/constants";
+import { TREE_TEST_SMALL } from "~/lib/data/test-data";
+import { ControlButton, Direction, ParseTreeNode } from "~/lib/types";
+import { insertNodeAtRandom, removeNodeById } from "~/lib/ui-utils";
 
 interface SyntaxScreenProps {
   onContinue: () => void;
@@ -23,7 +28,9 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
   const [tree, setTree] = createSignal<ParseTreeNode>(TREE_TEST_SMALL);
   const [addedNodeIds, setAddedNodeIds] = createSignal<Array<string>>([]);
   const [autoModeDirection, setAutoModeDirection] = createSignal<Direction>("none");
-  const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(undefined);
+  const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(
+    undefined,
+  );
 
   createEffect(() => {
     const direction = autoModeDirection();
@@ -96,38 +103,37 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
   };
 
   return (
-    <div class="flex flex-col items-center justify-center gap-6 w-full h-screen relative">
-      <div class="flex flex-row items-center justify-center gap-6 w-full max-w-4xl p-6 pb-0 flex-1 min-h-0">
-        <Card class="flex flex-1 items-center justify-center w-full h-full p-0">
-          <CardContent class="h-full w-full p-0 flex items-center justify-center overflow-hidden">
-            <ParseTree tree={tree}/>
+    <div class="relative flex h-screen w-full flex-col items-center justify-center gap-6">
+      <div class="flex min-h-0 w-full max-w-4xl flex-1 flex-row items-center justify-center gap-6 p-6 pb-0">
+        <Card class="flex h-full w-full flex-1 items-center justify-center p-0">
+          <CardContent class="flex h-full w-full items-center justify-center overflow-hidden p-0">
+            <ParseTree tree={tree} />
           </CardContent>
         </Card>
 
-        <Card class="flex items-start justify-start w-16 h-full">
-        </Card>
+        <Card class="flex h-full w-16 items-start justify-start">stack</Card>
       </div>
 
-      <div class="flex flex-col items-center justify-center w-full gap-6 px-6">
-        <div class="flex flex-row items-center justify-center w-full gap-2 h-10">
+      <div class="flex w-full flex-col items-center justify-center gap-6 px-6">
+        <div class="flex h-10 w-full flex-row items-center justify-center gap-2">
           <For each={Array(9)}>
             {(_, index: Accessor<number>) => (
-              <div class="flex items-center justify-center text-xl shadow-2xl rounded-md bg-primary-700 h-9 w-7">
+              <div class="flex h-9 w-7 items-center justify-center rounded-md bg-primary-700 text-xl shadow-2xl">
                 {buffer().at(index()) ?? ""}
               </div>
             )}
           </For>
         </div>
 
-        <div class="grid grid-cols-3 w-full gap-3 pb-6">
-          <div class="flex items-center justify-start w-full">
+        <div class="grid w-full grid-cols-3 gap-3 pb-6">
+          <div class="flex w-full items-center justify-start">
             <Button
               variant="ghost"
               size="default"
-              class="cursor-pointer w-fit"
+              class="w-fit cursor-pointer"
               onClick={props.onBack}
             >
-              <ChevronLeftIcon/>
+              <ChevronLeftIcon />
               Lexical analysis
             </Button>
           </div>
@@ -142,7 +148,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
               }}
               onClick={previousStep}
             >
-              <ChevronLeftIcon class="text-primary-900"/>
+              <ChevronLeftIcon class="text-primary-900" />
             </Button>
 
             <Button
@@ -153,14 +159,15 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
                 "bg-primary-300": autoModeDirection() !== "none",
                 "opacity-50 scale-95": lastPressedButton() === "play",
               }}
-              onClick={() => setAutoModeDirection(
-                autoModeDirection() === "none" ? "forward" : "none"
-              )}
+              onClick={() =>
+                setAutoModeDirection(autoModeDirection() === "none" ? "forward" : "none")
+              }
             >
-              <Show when={autoModeDirection() !== "none"} fallback={
-                <PlayIcon class="text-primary-900"/>
-              }>
-                <PauseIcon class="text-primary-900"/>
+              <Show
+                when={autoModeDirection() !== "none"}
+                fallback={<PlayIcon class="text-primary-900" />}
+              >
+                <PauseIcon class="text-primary-900" />
               </Show>
             </Button>
 
@@ -173,19 +180,19 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
               }}
               onClick={nextStep}
             >
-              <ChevronRightIcon class="text-primary-900"/>
+              <ChevronRightIcon class="text-primary-900" />
             </Button>
           </div>
 
-          <div class="flex items-center justify-end w-full">
+          <div class="flex w-full items-center justify-end">
             <Button
               variant="ghost"
               size="default"
-              class="cursor-pointer w-fit"
+              class="w-fit cursor-pointer"
               onClick={props.onContinue}
             >
               Results
-              <ChevronRightIcon/>
+              <ChevronRightIcon />
             </Button>
           </div>
         </div>

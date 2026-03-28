@@ -1,22 +1,13 @@
-import {LucideProps} from "lucide-solid";
-import {JSXElement} from "solid-js";
-
-export type LucideIcon = (props: LucideProps) => JSXElement;
-
 export type Token = {
-  data: TokenType;
+  type: TokenType;
   line: number;
   colStart: number;
   colEnd: number;
 };
 
-export type TokenType =
-  | Identifier
-  | Keyword
-  | Operator
-  | Punctuation;
+export type TokenType = Identifier | Keyword | Operator | Punctuation;
 
-export type Identifier = "IDENTIFIER";
+export type Identifier = "IDENT";
 
 export type Keyword =
   | "BEGIN"
@@ -32,22 +23,11 @@ export type Keyword =
   | "TRUE"
   | "FALSE";
 
-export type Operator =
-  | ":="
-  | "+"
-  | "-";
+export type Operator = ":=" | "+" | "-";
 
-export type Punctuation =
-  | ";"
-  | "("
-  | ")"
-  | ",";
+export type Punctuation = ";" | "(" | ")" | ",";
 
-export type Page =
-  | "input"
-  | "lex"
-  | "syntax"
-  | "results";
+export type Page = "input" | "lex" | "syntax" | "results";
 
 export type ParseTreeNode = {
   id: string;
@@ -55,17 +35,13 @@ export type ParseTreeNode = {
   children?: Array<ParseTreeNode>;
 };
 
-export type Direction =
-  | "none"
-  | "backward"
-  | "forward";
+export type Direction = "none" | "backward" | "forward";
 
-export type ControlButton =
-  | "previous"
-  | "next"
-  | "play";
+export type ControlButton = "previous" | "next" | "play";
 
-export type Result =
-  | "could-not-determine"
-  | "correct"
-  | "incorrect";
+export type Result = "could-not-determine" | "correct" | "incorrect";
+
+export type Caret = {
+  line: number;
+  col: number;
+};

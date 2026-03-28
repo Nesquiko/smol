@@ -1,17 +1,15 @@
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-import {ParseTreeNode} from "~/lib/types";
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+import { ParseTreeNode } from "~/lib/types";
 
 export const cn = (...inputs: Array<ClassValue>): string => {
   return twMerge(clsx(inputs));
 };
 
-export const formatLineNumber = (
-  lineNum: number,
-  totalLines: number,
-): string => {
+export const formatLineNumber = (lineNum: number, totalLines: number): string => {
   const width: number = totalLines.toString().length;
-  return lineNum.toString().padStart(width, ' ');
+  return lineNum.toString().padStart(width, " ");
 };
 
 export type NodeInsertResult = {
