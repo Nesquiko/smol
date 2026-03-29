@@ -1,136 +1,130 @@
 ## LL(1) Transition Table
 
-| Non-terminal      | **BEGIN** | **END** | **READ** | **WRITE** | **IF** | **THEN** | **OR** | **AND** | **NOT** | **TRUE** | **FALSE** | **IDENT** | **NUMBER** | **ASSIGN** | **SEMI** | **LPAREN** | **RPAREN** | **COMMA** | **PLUS** | **MINUS** | **$** |
-| ----------------- | --------- | ------- | -------- | --------- | ------ | -------- | ------ | ------- | ------- | -------- | --------- | --------- | ---------- | ---------- | -------- | ---------- | ---------- | --------- | -------- | --------- | ----- |
-| `program`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `statement_list`  |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `statement_list'` |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `statement`       |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `else`            |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `id_list`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `id_list'`        |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `expr_list`       |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `expr_list'`      |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `expression`      |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `expression'`     |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `factor`          |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `op`              |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `bexpr`           |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `bexpr'`          |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `bterm`           |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `bterm'`          |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `bfactor`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `ident`           |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `dent`            |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `letter`          |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `number`          |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `umber`           |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `sign`            |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `digit09`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `digit19`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| Non-terminal      | **BEGIN** | **END** | **READ** | **WRITE** | **IF** | **ELSE** | **THEN** | **OR** | **AND** | **NOT** | **TRUE** | **FALSE** | **IDENT** | **NUMBER** | **ASSIGN** | **SEMI** | **LPAREN** | **RPAREN** | **COMMA** | **PLUS** | **MINUS** | **$** |
+| ----------------- | --------- | ------- | -------- | --------- | ------ | -------- | -------- | ------ | ------- | ------- | -------- | --------- | --------- | ---------- | ---------- | -------- | ---------- | ---------- | --------- | -------- | --------- | ----- |
+| `program`         | 1         |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `statement_list`  |           |         | 2        | 2         | 2      |          |          |        |         |         |          |           | 2         |            |            |          |            |            |           |          |           |       |
+| `statement_list'` |           | 3       | 4        | 4         | 4      |          |          |        |         |         |          |           | 4         |            |            |          |            |            |           |          |           |       |
+| `statement`       |           |         | 6        | 7         | 8      |          |          |        |         |         |          |           | 5         |            |            |          |            |            |           |          |           |       |
+| `else`            |           |         |          |           |        | 10       |          |        |         |         |          |           |           |            |            | 9        |            |            |           |          |           |       |
+| `id_list`         |           |         |          |           |        |          |          |        |         |         |          |           | 11        |            |            |          |            |            |           |          |           |       |
+| `id_list'`        |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            | 12         | 13        |          |           |       |
+| `expr_list`       |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `expr_list'`      |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `expression`      |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `expression'`     |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `factor`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `op`              |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `bexpr`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `bexpr'`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `bterm`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `bterm'`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `bfactor`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `ident`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `dent`            |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `letter`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `number`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `umber`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `sign`            |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `digit09`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
+| `digit19`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 
 ## Rules
 
-- `program` -> **BEGIN** `statement_list` **END**
-  - F1(`program`) = {**BEGIN**}
-  - FO1(`program`) = {**$**}
+14. `expr_list` -> `expression` `expr_list'`
+    - F1 = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+15. `expr_list'` -> e
+    - FO1 = {**RPAREN**}
+16. `expr_list'` -> **COMMA** `expr_list`
+    - F1 = {**COMMA**}
+17. `expression` -> `factor` `expression'`
+    - F1 = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+18. `expression'` -> e
+    - FO1 = {**SEMI**, **COMMA**, **RPAREN**}
+19. `expression'` -> `op` `factor` `expression'`
+    - F1 = {**PLUS**, **MINUS**}
+20. `factor` -> `ident`
+    - F1 = {**IDENT**}
+21. `factor` -> `number`
+    - F1 = {**NUMBER**}
+22. `factor` -> **LPAREN** `expression` **RPAREN**
+    - F1 = {**LPAREN**}
+23. `op` -> **PLUS**
+    - F1 = {**PLUS**}
+24. `op` -> **MINUS**
+    - F1 = {**MINUS**}
+25. `bexpr` -> `bterm` `bexpr'`
+    - F1 = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
+26. `bexpr'` -> e
+    - FO1 = {**THEN**, **RPAREN**}
+27. `bexpr'` -> **OR** `bterm` `bexpr'`
+    - F1 = {**OR**}
+28. `bterm` -> `bfactor` `bterm'`
+    - F1 = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
+29. `bterm'` -> e
+    - FO1 = {**OR**, **THEN**, **RPAREN**}
+30. `bterm'` -> **AND** `bfactor` `bterm'`
+    - F1 = {**AND**}
+31. `bfactor` -> **NOT** `bfactor`
+    - F1 = {**NOT**}
+32. `bfactor` -> **LPAREN** `bexpr` **RPAREN**
+    - F1 = {**LPAREN**}
+33. `bfactor` -> **TRUE**
+    - F1 = {**TRUE**}
+34. `bfactor` -> **FALSE**
+    - F1 = {**FALSE**}
+35. `ident` -> **IDENT**
+    - F1 = {**IDENT**}
+36. `dent` -> e
+    - FO1 = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
+37. `dent` -> `letter` `dent`
+    - F1 = {**IDENT**}
+38. `dent` -> `digit09` `dent`
+    - F1 = {**NUMBER**}
+39. `letter` -> **IDENT**
+    - F1 = {**IDENT**}
+40. `number` -> **NUMBER**
+    - F1 = {**NUMBER**}
+41. `umber` -> e
+    - FO1 = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
+42. `umber` -> `digit09` `umber`
+    - F1 = {**NUMBER**}
+43. `sign` -> e
+    - FO1 = {**NUMBER**}
+44. `sign` -> **PLUS**
+    - F1 = {**PLUS**}
+45. `sign` -> **MINUS**
+    - F1 = {**MINUS**}
+46. `digit09` -> **NUMBER**
+    - F1 = {**NUMBER**}
+47. `digit19` -> **NUMBER**
+    - F1 = {**NUMBER**}
 
-- `statement_list` -> `statement` `statement_list'`
-  - F1(`statement_list`) = {**IDENT**, **READ**, **WRITE**, **IF**}
-  - FO1(`statement_list`) = {**END**}
+## ----
 
-- `statement_list'` -> e | `statement_list`
-  - F1(`statement_list'`) = {**IDENT**, **READ**, **WRITE**, **IF**, e}
-  - FO1(`statement_list'`) = {**END**}
-
-- `statement` -> `ident` **ASSIGN** `expression` **SEMI** | **READ** **LPAREN** `id_list` **RPAREN** **SEMI** | **WRITE** **LPAREN** `expr_list` **RPAREN** **SEMI** | **IF** `bexpr` **THEN** `statement` `else` **SEMI**
-  - F1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**}
-  - FO1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**, **END**, **ELSE**, **SEMI**}
-
-- `else` -> e | **ELSE** `statement`
-  - F1(`else`) = {**ELSE**, e}
-  - FO1(`else`) = {**SEMI**}
-
-- `id_list` -> `ident` `id_list'`
-  - F1(`id_list`) = {**IDENT**}
-  - FO1(`id_list`) = {**RPAREN**}
-
-- `id_list'` -> e | **COMMA** `id_list`
-  - F1(`id_list'`) = {**COMMA**, e}
-  - FO1(`id_list'`) = {**RPAREN**}
-
-- `expr_list` -> `expression` `expr_list'`
-  - F1(`expr_list`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
-  - FO1(`expr_list`) = {**RPAREN**}
-
-- `expr_list'` -> e | **COMMA** `expr_list`
-  - F1(`expr_list'`) = {**COMMA**, e}
-  - FO1(`expr_list'`) = {**RPAREN**}
-
-- `expression` -> `factor` `expression'`
-  - F1(`expression`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
-  - FO1(`expression`) = {**SEMI**, **COMMA**, **RPAREN**}
-
-- `expression'` -> e | `op` `factor` `expression'`
-  - F1(`expression'`) = {**PLUS**, **MINUS**, e}
-  - FO1(`expression'`) = {**SEMI**, **COMMA**, **RPAREN**}
-
-- `factor` -> `ident` | `number` | **LPAREN** `expression` **RPAREN**
-  - F1(`factor`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
-  - FO1(`factor`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-
-- `op` -> **PLUS** | **MINUS**
-  - F1(`op`) = {**PLUS**, **MINUS**}
-  - FO1(`op`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
-
-- `bexpr` -> `bterm` `bexpr'`
-  - F1(`bexpr`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
-  - FO1(`bexpr`) = {**THEN**, **RPAREN**}
-
-- `bexpr'` -> e | **OR** `bterm` `bexpr'`
-  - F1(`bexpr'`) = {**OR**, e}
-  - FO1(`bexpr'`) = {**THEN**, **RPAREN**}
-
-- `bterm` -> `bfactor` `bterm'`
-  - F1(`bterm`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
-  - FO1(`bterm`) = {**OR**, **THEN**, **RPAREN**}
-
-- `bterm'` -> e | **AND** `bfactor` `bterm'`
-  - F1(`bterm'`) = {**AND**, e}
-  - FO1(`bterm'`) = {**OR**, **THEN**, **RPAREN**}
-
-- `bfactor` -> **NOT** `bfactor` | **LPAREN** `bexpr` **RPAREN** | **TRUE** | **FALSE**
-  - F1(`bfactor`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
-  - FO1(`bfactor`) = {**AND**, **OR**, **THEN**, **RPAREN**}
-
-- `ident` -> **IDENT**
-  - F1(`ident`) = {**IDENT**}
-  - FO1(`ident`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `dent` -> e | `letter` `dent` | `digit09` `dent`
-  - F1(`dent`) = {**IDENT**, **NUMBER**, e}
-  - FO1(`dent`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `letter` -> **IDENT**
-  - F1(`letter`) = {**IDENT**}
-  - FO1(`letter`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `number` -> **NUMBER**
-  - F1(`number`) = {**NUMBER**}
-  - FO1(`number`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-
-- `umber` -> e | `digit09` `umber`
-  - F1(`umber`) = {**NUMBER**, e}
-  - FO1(`umber`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-
-- `sign` -> e | **PLUS** | **MINUS**
-  - F1(`sign`) = {**PLUS**, **MINUS**, e}
-  - FO1(`sign`) = {**NUMBER**}
-
-- `digit09` -> **NUMBER**
-  - F1(`digit09`) = {**NUMBER**}
-  - FO1(`digit09`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `digit19` -> **NUMBER**
-  - F1(`digit19`) = {**NUMBER**}
-  - FO1(`digit19`) = {**NUMBER**, **PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
+1. `program` -> **BEGIN** `statement_list` **END**
+   - F1 = {**BEGIN**}
+2. `statement_list` -> `statement` `statement_list'`
+   - F1 = {**IDENT**, **READ**, **WRITE**, **IF**}
+3. `statement_list'` -> e
+   - FO1 = {**END**}
+4. `statement_list'` -> `statement_list`
+   - F1 = {**IDENT**, **READ**, **WRITE**, **IF**}
+5. `statement` -> `ident` **ASSIGN** `expression` **SEMI**
+   - F1 = {**IDENT**}
+6. `statement` -> **READ** **LPAREN** `id_list` **RPAREN** **SEMI**
+   - F1 = {**READ**}
+7. `statement` -> **WRITE** **LPAREN** `expr_list` **RPAREN** **SEMI**
+   - F1 = {**WRITE**}
+8. `statement` -> **IF** `bexpr` **THEN** `statement` `else` **SEMI**
+   - F1 = {**IF**}
+9. `else` -> e
+   - FO1 = {**SEMI**}
+10. `else` -> **ELSE** `statement`
+    - F1 = {**ELSE**}
+11. `id_list` -> `ident` `id_list'`
+    - F1 = {**IDENT**}
+12. `id_list'` -> e
+    - FO1 = {**RPAREN**}
+13. `id_list'` -> **COMMA** `id_list`
+    - F1 = {**COMMA**}
