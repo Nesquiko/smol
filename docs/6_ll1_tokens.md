@@ -5,6 +5,7 @@
 - **READ** = _READ_
 - **WRITE** = _WRITE_
 - **IF** = _IF_
+- **ELSE** = _ELSE_
 - **THEN** = _THEN_
 - **OR** = _OR_
 - **AND** = _AND_
