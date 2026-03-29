@@ -29,108 +29,108 @@
 | `digit09`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 | `digit19`         |           |         |          |           |        |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 
-## rules
+## Rules
 
-- `program` -> _BEGIN_`statement_list`_END_
-  - F1(`program`) = {_BEGIN_}
-  - FO1(`program`) = {$}
+- `program` -> **BEGIN** `statement_list` **END**
+  - F1(`program`) = {**BEGIN**}
+  - FO1(`program`) = {**$**}
 
 - `statement_list` -> `statement` `statement_list'`
-  - F1(`statement_list`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_}
-  - FO1(`statement_list`) = {_END_}
+  - F1(`statement_list`) = {**IDENT**, **READ**, **WRITE**, **IF**}
+  - FO1(`statement_list`) = {**END**}
 
 - `statement_list'` -> e | `statement_list`
-  - F1(`statement_list'`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_, e}
-  - FO1(`statement_list'`) = {_END_}
+  - F1(`statement_list'`) = {**IDENT**, **READ**, **WRITE**, **IF**, e}
+  - FO1(`statement_list'`) = {**END**}
 
-- `statement` -> `ident`_:=_`expression`_;_ | _READ_ _(_`id_list`_)_ _;_ | _WRITE_ _(_`expr_list`_)_ _;_ | _IF_`bexpr`_THEN_`statement` `else`_;_
-  - F1(`statement`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_}
-  - FO1(`statement`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_, _END_, _ELSE_, _;_}
+- `statement` -> `ident` **ASSIGN** `expression` **SEMI** | **READ** **LPAREN** `id_list` **RPAREN** **SEMI** | **WRITE** **LPAREN** `expr_list` **RPAREN** **SEMI** | **IF** `bexpr` **THEN** `statement` `else` **SEMI**
+  - F1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**}
+  - FO1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**, **END**, **ELSE**, **SEMI**}
 
-- `else` -> e | _ELSE_`statement`
-  - F1(`else`) = {_ELSE_, e}
-  - FO1(`else`) = {_;_}
+- `else` -> e | **ELSE** `statement`
+  - F1(`else`) = {**ELSE**, e}
+  - FO1(`else`) = {**SEMI**}
 
 - `id_list` -> `ident` `id_list'`
-  - F1(`id_list`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
-  - FO1(`id_list`) = {_)_}
+  - F1(`id_list`) = {**IDENT**}
+  - FO1(`id_list`) = {**RPAREN**}
 
-- `id_list'` -> e | _,_`id_list`
-  - F1(`id_list'`) = {_,_, e}
-  - FO1(`id_list'`) = {_)_}
+- `id_list'` -> e | **COMMA** `id_list`
+  - F1(`id_list'`) = {**COMMA**, e}
+  - FO1(`id_list'`) = {**RPAREN**}
 
 - `expr_list` -> `expression` `expr_list'`
-  - F1(`expr_list`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
-  - FO1(`expr_list`) = {_)_}
+  - F1(`expr_list`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - FO1(`expr_list`) = {**RPAREN**}
 
-- `expr_list'` -> e | _,_`expr_list`
-  - F1(`expr_list'`) = {_,_, e}
-  - FO1(`expr_list'`) = {_)_}
+- `expr_list'` -> e | **COMMA** `expr_list`
+  - F1(`expr_list'`) = {**COMMA**, e}
+  - FO1(`expr_list'`) = {**RPAREN**}
 
 - `expression` -> `factor` `expression'`
-  - F1(`expression`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
-  - FO1(`expression`) = {_;_, _,_, _)_}
+  - F1(`expression`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - FO1(`expression`) = {**SEMI**, **COMMA**, **RPAREN**}
 
 - `expression'` -> e | `op` `factor` `expression'`
-  - F1(`expression'`) = {_+_, _-_, e}
-  - FO1(`expression'`) = {_;_, _,_, _)_}
+  - F1(`expression'`) = {**PLUS**, **MINUS**, e}
+  - FO1(`expression'`) = {**SEMI**, **COMMA**, **RPAREN**}
 
-- `factor` -> `ident` | `number` | _(_`expression`_)_
-  - F1(`factor`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
-  - FO1(`factor`) = {_+_, _-_, _;_, _,_, _)_}
+- `factor` -> `ident` | `number` | **LPAREN** `expression` **RPAREN**
+  - F1(`factor`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - FO1(`factor`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
 
-- `op` -> _+_ | _−_
-  - F1(`op`) = {_+_, _-_}
-  - FO1(`op`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
+- `op` -> **PLUS** | **MINUS**
+  - F1(`op`) = {**PLUS**, **MINUS**}
+  - FO1(`op`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
 
 - `bexpr` -> `bterm` `bexpr'`
-  - F1(`bexpr`) = {_NOT_, _(_, _TRUE_, _FALSE_}
-  - FO1(`bexpr`) = {_THEN_, _)_}
+  - F1(`bexpr`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
+  - FO1(`bexpr`) = {**THEN**, **RPAREN**}
 
-- `bexpr'` -> e | _OR_`bterm` `bexpr'`
-  - F1(`bexpr'`) = {_OR_, e}
-  - FO1(`bexpr'`) = {_THEN_, _)_}
+- `bexpr'` -> e | **OR** `bterm` `bexpr'`
+  - F1(`bexpr'`) = {**OR**, e}
+  - FO1(`bexpr'`) = {**THEN**, **RPAREN**}
 
 - `bterm` -> `bfactor` `bterm'`
-  - F1(`bterm`) = {_NOT_, _(_, _TRUE_, _FALSE_}
-  - FO1(`bterm`) = {_OR_, _THEN_, _)_}
+  - F1(`bterm`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
+  - FO1(`bterm`) = {**OR**, **THEN**, **RPAREN**}
 
-- `bterm'` -> e | _AND_`bfactor` `bterm'`
-  - F1(`bterm'`) = {_AND_, e}
-  - FO1(`bterm'`) = {_OR_, _THEN_, _)_}
+- `bterm'` -> e | **AND** `bfactor` `bterm'`
+  - F1(`bterm'`) = {**AND**, e}
+  - FO1(`bterm'`) = {**OR**, **THEN**, **RPAREN**}
 
-- `bfactor` -> _NOT_`bfactor` | _(_`bexpr`_)_ | _TRUE_ | _FALSE_
-  - F1(`bfactor`) = {_NOT_, _(_, _TRUE_, _FALSE_}
-  - FO1(`bfactor`) = {_AND_, _OR_, _THEN_, _)_}
+- `bfactor` -> **NOT** `bfactor` | **LPAREN** `bexpr` **RPAREN** | **TRUE** | **FALSE**
+  - F1(`bfactor`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
+  - FO1(`bfactor`) = {**AND**, **OR**, **THEN**, **RPAREN**}
 
-- `ident` -> `letter` `dent`
-  - F1(`ident`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
-  - FO1(`ident`) = {_:=_, _,_, _)_, _+_, _-_, _;_}
+- `ident` -> **IDENT**
+  - F1(`ident`) = {**IDENT**}
+  - FO1(`ident`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
 
 - `dent` -> e | `letter` `dent` | `digit09` `dent`
-  - F1(`dent`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, e}
-  - FO1(`dent`) = {_:=_, _,_, _)_, _+_, _-_, _;_}
+  - F1(`dent`) = {**IDENT**, **NUMBER**, e}
+  - FO1(`dent`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
 
-- `letter` -> _a_ | .. | _z_ | _A_ | .. | _Z_
-  - F1(`letter`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
-  - FO1(`letter`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, _:=_, _,_, _)_, _+_, _-_, _;_}
+- `letter` -> **IDENT**
+  - F1(`letter`) = {**IDENT**}
+  - FO1(`letter`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
 
-- `number` -> `sign` `digit19` `umber`
-  - F1(`number`) = {_+_, _-_, _1_, ..., _9_}
-  - FO1(`number`) = {_+_, _-_, _;_, _,_, _)_}
+- `number` -> **NUMBER**
+  - F1(`number`) = {**NUMBER**}
+  - FO1(`number`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
 
 - `umber` -> e | `digit09` `umber`
-  - F1(`umber`) = {_0_, _1_, ..., _9_, e}
-  - FO1(`umber`) = {_+_, _-_, _;_, _,_, _)_}
+  - F1(`umber`) = {**NUMBER**, e}
+  - FO1(`umber`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
 
-- `sign` -> e | _+_ | _-_
-  - F1(`sign`) = {_+_, _-_, e}
-  - FO1(`sign`) = {_1_, ..., _9_}
+- `sign` -> e | **PLUS** | **MINUS**
+  - F1(`sign`) = {**PLUS**, **MINUS**, e}
+  - FO1(`sign`) = {**NUMBER**}
 
-- `digit09` -> _0_ | .. | _9_
-  - F1(`digit09`) = {_0_, _1_, ..., _9_}
-  - FO1(`digit09`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, _:=_, _,_, _)_, _+_, _-_, _;_}
+- `digit09` -> **NUMBER**
+  - F1(`digit09`) = {**NUMBER**}
+  - FO1(`digit09`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
 
-- `digit19` -> _1_ | .. | _9_
-  - F1(`digit19`) = {_1_, ..., _9_}
-  - FO1(`digit19`) = {_0_, _1_, ..., _9_, _+_, _-_, _;_, _,_, _)_}
+- `digit19` -> **NUMBER**
+  - F1(`digit19`) = {**NUMBER**}
+  - FO1(`digit19`) = {**NUMBER**, **PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
