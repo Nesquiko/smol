@@ -1,0 +1,204 @@
+## Tokens
+
+- **BEGIN** = _BEGIN_
+- **END** = _END_
+- **READ** = _READ_
+- **WRITE** = _WRITE_
+- **IF** = _IF_
+- **THEN** = _THEN_
+- **OR** = _OR_
+- **AND** = _AND_
+- **NOT** = _NOT_
+- **TRUE** = _TRUE_
+- **FALSE** = _FALSE_
+- **IDENT** = letter (letter | digit09)\*
+- **NUMBER** = sign? digit19 digit09\*
+
+- **ASSIGN** = _:=_
+- **SEMI** = _;_
+- **LPAREN** = _(_
+- **RPAREN** = _)_
+- **COMMA** = _,_
+- **PLUS** = _+_
+- **MINUS** = _-_
+
+## Grammar
+
+- `program` -> _BEGIN_`statement_list`_END_
+  - F1(`program`) = {_BEGIN_}
+  - FO1(`program`) = {$}
+  - [x] F1 x F1: no conflict, only one rule
+
+- `statement_list` -> `statement` `statement_list'`
+  - F1(`statement_list`) = F1(`statement` `statement_list'`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_}
+  - FO1(`statement_list`) = F1(_END_) u FO1(`statement_list'`) = F1(_END_) u ~~FO1(`statement_list`)~~ = {_END_}
+    - from rules: `program` 1, `statement_list'`
+  - [x] F1 x F1: no conflict, only one rule
+
+- `statement_list'` -> e | `statement_list`
+  - F1(`statement_list'`) = F1(e) u F1(`statement_list`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_, e}
+  - FO1(`statement_list'`) = FO1(`statement_list`) = {_END_}
+    - from rules: `statement_list` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+    - F1(e) = {e}
+    - F1(`statement_list`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_}
+
+- `statement` -> `ident`_:=_`expression`_;_ | _READ_ _(_`id_list`_)_ _;_ | _WRITE_ _(_`expr_list`_)_ _;_ | _IF_`bexpr`_THEN_`statement` `else`_;_
+  - F1(`statement`) = F1(`ident`_:=_`expression`_;_) u F1(_READ_ _(_`id_list`_)_ _;_) F1(_WRITE_ _(_`expr_list`_)_ _;_) u F1(_IF_`bexpr`_THEN_`statement` `else`_;_) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_}
+  - FO1(`statement`) = F1(`statement_list'`) u F1(`else`) u FO1(`else`) = F1(`statement_list'`)/e u FO1(`statement_list`) u F1(`else`_;_) u FO1(`else`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _READ_, _WRITE_, _IF_, _END_, _ELSE_, _;_}
+    - from rules: `statement_list` 1, `statement` 4, `else` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+    - F1(`ident`_:=_`expression`_;_) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+    - F1(_READ_ _(_`id_list`_)_ _;_) = {_READ_}
+    - F1(_WRITE_ _(_`expr_list`_)_ _;_) = {_WRITE_}
+    - F1(_IF_`bexpr`_THEN_`statement` `else`_;_) = {_IF_}
+
+- `else` -> e | _ELSE_`statement`
+  - F1(`else`) = F1(e) u F1(_ELSE_ `statement`) = {_ELSE_, e}
+  - FO1(`else`) = F1(_;_) = {_;_}
+    - from rules: `statement` 4
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `id_list` -> `ident` `id_list'`
+  - F1(`id_list`) = F1(`ident` `id_list'`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+  - FO1(`id_list`) = F1(_)_ _;_) u FO1(`id_list'`) = F1(_)_ _;_) u ~~FO1(`id_list`)~~ = {_)_}
+    - from rules: `statement` 2, `id_list'` 2
+  - [x] F1 x F1: no conflict, only one rule
+
+- `id_list'` -> e | _,_`id_list`
+  - F1(`id_list'`) = F1(e) u F1(_,_ `id_list`) = {_,_, e}
+  - FO1(`id_list'`) = FO1(`id_list`) = {_)_}
+    - from rules: `id_list` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `expr_list` -> `expression` `expr_list'`
+  - F1(`expr_list`) = F1(`expression` `expr_list'`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
+  - FO1(`expr_list`) = F1(_)_ _;_) u FO1(`expr_list'`) = F1(_)_ _;_) u ~~FO1(`expr_list`)~~ = {_)_}
+    - from rules: `statement` 3, `expr_list'` 2
+  - [x] F1 x F1: no conflict, only one rule
+
+- `expr_list'` -> e | _,_`expr_list`
+  - F1(`expr_list'`) = F1(e) u F1(_,_`expr_list`) = {_,_, e}
+  - FO1(`expr_list'`) = FO1(`expr_list`) = {_)_}
+    - from rules: `expr_list` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `expression` -> `factor` `expression'`
+  - F1(`expression`) = F1(`factor` `expression'`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
+  - FO1(`expression`) = F1(_;_) u F1(`expr_list'`) u F1(_)_) = F1(_;_) u F1(`expr_list'`)/e u FO1(`expr_list`) u F1(_)_) = {_;_, _,_, _)_}
+    - from rules: `statement` 1, `expr_list` 1, `factor` 3
+  - [x] F1 x F1: no conflict, only one rule
+
+- `expression'` -> e | `op` `factor` `expression'`
+  - F1(`expression'`) = F1(e) u F1(`op` `factor` `expression'`) = {_+_, _-_, e}
+  - FO1(`expression'`) = FO1(`expression`) u ~~FO1(`expression'`)~~ = {_;_, _,_, _)_}
+    - from rules: `expression` 1, `expression'` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+    - F1(e) = {e}
+    - F1(`op` `factor` `expression'`) = {_+_, _-_}
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `factor` -> `ident` | `number` | _(_`expression`_)_
+  - F1(`factor`) = F1(`ident`) u F1(`number`) u F1(_(_`expression`_)_) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
+  - FO1(`factor`) = F1(`expression'`) u F1(`expression'`) = F1(`expression'`)/e u FO1(`expression`) u F1(`expression'`)/e u FO1(`expression'`) = {_+_, _-_, _;_, _,_, _)_}
+    - from rules: `expression` 1, `expression'` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+    - F1(`ident`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+    - F1(`number`) = {_+_, _-_, _1_, ..., _9_}
+    - F1(_(_`expression`_)_) = {_(_}
+
+- `op` -> _+_ | _−_
+  - F1(`op`) = {_+_, _-_}
+  - FO1(`op`) = F1(`factor`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _+_, _-_, _1_, ..., _9_, _(_}
+    - from rules: `expression'` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+
+- `bexpr` -> `bterm` `bexpr'`
+  - F1(`bexpr`) = F1(`bterm` `bexpr'`) = {_NOT_, _(_, _TRUE_, _FALSE_}
+  - FO1(`bexpr`) = F1(_THEN_`statement` `else`_;_) u F1(_)_) = {_THEN_, _)_}
+    - from rules: `statement` 4, `bfactor` 2
+  - [x] F1 x F1: no conflict, only one rule
+
+- `bexpr'` -> e | _OR_`bterm` `bexpr'`
+  - F1(`bexpr'`) = F1(_OR_`bterm` `bexpr'`) u F1(e) = {_OR_, e}
+  - FO1(`bexpr'`) = FO1(`bexpr`) u ~~FO1(`bexpr'`)~~ = {_THEN_, _)_}
+    - from rules: `bexpr` 1, `bexpr'` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `bterm` -> `bfactor` `bterm'`
+  - F1(`bterm`) = F1(`bfactor` `bterm'`) = {_NOT_, _(_, _TRUE_, _FALSE_}
+  - FO1(`bterm`) = F1(`bexpr'`) u F1(`bexpr'`) = F1(`bexpr'`)/e u FO1(`bexpr`) u F1(`bexpr'`)/e u FO1(`bexpr'`) = {_OR_, _THEN_, _)_}
+    - from rules: `bexpr` 1, `bexpr'` 2
+  - [x] F1 x F1: no conflict, only one rule
+
+- `bterm'` -> e | _AND_`bfactor` `bterm'`
+  - F1(`bterm'`) = F1(_AND_`bfactor` `bterm'`) u F1(e) = {_AND_, e}
+  - FO1(`bterm'`) = FO1(`bterm`) u ~~FO1(`bterm'`)~~ = {_OR_, _THEN_, _)_}
+    - from rules: `bterm` 1, `bterm'` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `bfactor` -> _NOT_`bfactor` | _(_`bexpr`_)_ | _TRUE_ | _FALSE_
+  - F1(`bfactor`) = F1(_NOT_`bfactor`) u F1(_(_`bexpr`_)_) u F1(_TRUE_) u F1(_FALSE_) = {_NOT_, _(_, _TRUE_, _FALSE_}
+  - FO1(`bfactor`) = F1(`bterm'`) u F1(`bterm'`) u ~~FO1(`bfactor`)~~ = F1(`bterm'`)/e u FO1(`bterm`) u F1(`bterm'`)/e u FO1(`bterm'`) = {_AND_, _OR_, _THEN_, _)_}
+    - from rules: `bterm` 1, `bterm'` 2, `bfactor` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+
+- `ident` -> `letter` `dent`
+  - F1(`ident`) = F1(`letter`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+  - FO1(`ident`) = F1(_:=_`expression`_;_) u F1(`id_list'`) u FO1(`factor`) = F1(_:=_`expression`_;_) u F1(`id_list'`)/e u FO1(`id_list`) u FO1(`factor`) = {_:=_, _,_, _)_, _+_, _-_, _;_}
+    - from rules: `statement` 1, `id_list` 1, `factor` 1
+  - [x] F1 x F1: no conflict, only one rules
+
+- `dent` -> e | `letter` `dent` | `digit09` `dent`
+  - F1(`dent`) = F1(e) u F1(`letter` `dent`) u F1(`digit09` `dent`) = F1(e) u F1(`letter`) u F1(`digit09`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, e}
+  - FO1(`dent`) = FO1(`ident`) u ~~FO1(`dent`)~~ u ~~FO1(`dent`)~~ = {_:=_, _,_, _)_, _+_, _-_, _;_}
+    - from rules: `ident` 1, `dent` 2, `dent` 3
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+    - F1(`letter` `dent`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+    - F1(`digit09` `dent`) = {_0_, _1_, ..., _9_}
+    - F1(e) = {e}
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `letter` -> _a_ | .. | _z_ | _A_ | .. | _Z_
+  - F1(`letter`) = {_a_ | .. | _z_ | _A_ | .. | _Z_}
+  - FO1(`letter`) = F1(`dent`) u F1(`dent`) = F1(`dent`)/e u FO1(`ident`) u F1(`dent`)/e u FO1(`dent`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, _:=_, _,_, _)_, _+_, _-_, _;_}
+    - from rules: `ident` 1, `dent` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+
+- `number` -> `sign` `digit19` `umber`
+  - F1(`number`) = F1(`sign` `digit19` `umber`) = F1(`sign`)/e u F1(`digit19`) = {_+_, _-_, _1_, ..., _9_}
+  - FO1(`number`) = FO1(`factor`) = {_+_, _-_, _;_, _,_, _)_}
+    - from rules: `factor` 1
+  - [x] F1 x F1: no conflict, only one rules
+
+- `umber` -> e | `digit09` `umber`
+  - F1(`umber`) = F1(`digit09` `umber`) u F1(e) = F1(`digit09`) u F1(e) = {_0_, _1_, ..., _9_, e}
+  - FO1(`umber`) = FO1(`number`) = {_+_, _-_, _;_, _,_, _)_}
+    - from rules: `number` 1
+  - [x] F1 x F1: F1(`digit09` `umber`) ∩ F1(e) = {}
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `sign` -> e | _+_ | _-_
+  - F1(`sign`) = {_+_, _-_, e}
+  - FO1(`sign`) = F1(`digit19`) = {_1_, ..., _9_}
+    - from rules: `number` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+  - [x] F1 x FO1: no conflict, no intersection between F1s of alternatives and FO of rule
+
+- `digit09` -> _0_ | .. | _9_
+  - F1(`digit09`) = {_0_, _1_, ..., _9_}
+  - FO1(`digit09`) = F1(`dent`) u F1(`umber`) = F1(`dent`)/e u FO1(`dent`) u F1(`umber`)/e u FO1(`umber`) = {_a_ | .. | _z_ | _A_ | .. | _Z_, _0_, _1_, ..., _9_, _:=_, _,_, _)_, _+_, _-_, _;_}
+    - from rules: `dent` 3, `umber` 2
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
+
+- `digit19` -> _1_ | .. | _9_
+  - F1(`digit19`) = {_1_, ..., _9_}
+  - FO1(`digit19`) = F1(`umber`) = F1(`umber`)/e u FO1(`number`) = {_0_, _1_, ..., _9_, _+_, _-_, _;_, _,_, _)_}
+    - from rules: `number` 1
+  - [x] F1 x F1: no conflict, no intersection of F1 between all alternatives
