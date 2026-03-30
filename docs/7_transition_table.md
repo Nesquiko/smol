@@ -20,14 +20,6 @@
 | `bterm`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 | `bterm'`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 | `bfactor`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `ident`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `dent`            |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `letter`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `number`          |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `umber`           |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `sign`            |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `digit09`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
-| `digit19`         |           |         |          |           |        |          |          |        |         |         |          |           |           |            |            |          |            |            |           |          |           |       |
 
 ## Rules
 
@@ -39,7 +31,7 @@
    - FO1 = {**END**}
 4. `statement_list'` -> `statement_list`
    - F1 = {**IDENT**, **READ**, **WRITE**, **IF**}
-5. `statement` -> `ident` **ASSIGN** `expression` **SEMI**
+5. `statement` -> **IDENT** **ASSIGN** `expression` **SEMI**
    - F1 = {**IDENT**}
 6. `statement` -> **READ** **LPAREN** `id_list` **RPAREN** **SEMI**
    - F1 = {**READ**}
@@ -51,27 +43,27 @@
    - FO1 = {**SEMI**}
 10. `else` -> **ELSE** `statement`
     - F1 = {**ELSE**}
-11. `id_list` -> `ident` `id_list'`
+11. `id_list` -> **IDENT** `id_list'`
     - F1 = {**IDENT**}
 12. `id_list'` -> e
     - FO1 = {**RPAREN**}
 13. `id_list'` -> **COMMA** `id_list`
     - F1 = {**COMMA**}
 14. `expr_list` -> `expression` `expr_list'`
-    - F1 = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+    - F1 = {**IDENT**, **NUMBER**, **LPAREN**}
 15. `expr_list'` -> e
     - FO1 = {**RPAREN**}
 16. `expr_list'` -> **COMMA** `expr_list`
     - F1 = {**COMMA**}
 17. `expression` -> `factor` `expression'`
-    - F1 = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+    - F1 = {**IDENT**, **NUMBER**, **LPAREN**}
 18. `expression'` -> e
     - FO1 = {**SEMI**, **COMMA**, **RPAREN**}
 19. `expression'` -> `op` `factor` `expression'`
     - F1 = {**PLUS**, **MINUS**}
-20. `factor` -> `ident`
+20. `factor` -> **IDENT**
     - F1 = {**IDENT**}
-21. `factor` -> `number`
+21. `factor` -> **NUMBER**
     - F1 = {**NUMBER**}
 22. `factor` -> **LPAREN** `expression` **RPAREN**
     - F1 = {**LPAREN**}
@@ -99,29 +91,3 @@
     - F1 = {**TRUE**}
 34. `bfactor` -> **FALSE**
     - F1 = {**FALSE**}
-35. `ident` -> **IDENT**
-    - F1 = {**IDENT**}
-36. `dent` -> e
-    - FO1 = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-37. `dent` -> `letter` `dent`
-    - F1 = {**IDENT**}
-38. `dent` -> `digit09` `dent`
-    - F1 = {**NUMBER**}
-39. `letter` -> **IDENT**
-    - F1 = {**IDENT**}
-40. `number` -> **NUMBER**
-    - F1 = {**NUMBER**}
-41. `umber` -> e
-    - FO1 = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-42. `umber` -> `digit09` `umber`
-    - F1 = {**NUMBER**}
-43. `sign` -> e
-    - FO1 = {**NUMBER**}
-44. `sign` -> **PLUS**
-    - F1 = {**PLUS**}
-45. `sign` -> **MINUS**
-    - F1 = {**MINUS**}
-46. `digit09` -> **NUMBER**
-    - F1 = {**NUMBER**}
-47. `digit19` -> **NUMBER**
-    - F1 = {**NUMBER**}

@@ -25,6 +25,12 @@
 
 ## Grammar
 
+After tokenization, `ident` and `number` were replaced in parser rules by
+**IDENT** and **NUMBER**, and character rules `dent`, `letter`,
+`umber`, `sign`, `digit09`, and `digit19` were removed because they are
+handled by the lexer. Therefore the parser `F1` and `FO1` sets are
+computed only over token symbols.
+
 - `program` -> **BEGIN** `statement_list` **END**
   - F1(`program`) = {**BEGIN**}
   - FO1(`program`) = {**$**}
@@ -37,7 +43,7 @@
   - F1(`statement_list'`) = {**IDENT**, **READ**, **WRITE**, **IF**, e}
   - FO1(`statement_list'`) = {**END**}
 
-- `statement` -> `ident` **ASSIGN** `expression` **SEMI** | **READ** **LPAREN** `id_list` **RPAREN** **SEMI** | **WRITE** **LPAREN** `expr_list` **RPAREN** **SEMI** | **IF** `bexpr` **THEN** `statement` `else` **SEMI**
+- `statement` -> **IDENT** **ASSIGN** `expression` **SEMI** | **READ** **LPAREN** `id_list` **RPAREN** **SEMI** | **WRITE** **LPAREN** `expr_list` **RPAREN** **SEMI** | **IF** `bexpr` **THEN** `statement` `else` **SEMI**
   - F1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**}
   - FO1(`statement`) = {**IDENT**, **READ**, **WRITE**, **IF**, **END**, **ELSE**, **SEMI**}
 
@@ -45,7 +51,7 @@
   - F1(`else`) = {**ELSE**, e}
   - FO1(`else`) = {**SEMI**}
 
-- `id_list` -> `ident` `id_list'`
+- `id_list` -> **IDENT** `id_list'`
   - F1(`id_list`) = {**IDENT**}
   - FO1(`id_list`) = {**RPAREN**}
 
@@ -54,7 +60,7 @@
   - FO1(`id_list'`) = {**RPAREN**}
 
 - `expr_list` -> `expression` `expr_list'`
-  - F1(`expr_list`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - F1(`expr_list`) = {**IDENT**, **NUMBER**, **LPAREN**}
   - FO1(`expr_list`) = {**RPAREN**}
 
 - `expr_list'` -> e | **COMMA** `expr_list`
@@ -62,20 +68,20 @@
   - FO1(`expr_list'`) = {**RPAREN**}
 
 - `expression` -> `factor` `expression'`
-  - F1(`expression`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - F1(`expression`) = {**IDENT**, **NUMBER**, **LPAREN**}
   - FO1(`expression`) = {**SEMI**, **COMMA**, **RPAREN**}
 
 - `expression'` -> e | `op` `factor` `expression'`
   - F1(`expression'`) = {**PLUS**, **MINUS**, e}
   - FO1(`expression'`) = {**SEMI**, **COMMA**, **RPAREN**}
 
-- `factor` -> `ident` | `number` | **LPAREN** `expression` **RPAREN**
-  - F1(`factor`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+- `factor` -> **IDENT** | **NUMBER** | **LPAREN** `expression` **RPAREN**
+  - F1(`factor`) = {**IDENT**, **NUMBER**, **LPAREN**}
   - FO1(`factor`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
 
 - `op` -> **PLUS** | **MINUS**
   - F1(`op`) = {**PLUS**, **MINUS**}
-  - FO1(`op`) = {**IDENT**, **PLUS**, **MINUS**, **NUMBER**, **LPAREN**}
+  - FO1(`op`) = {**IDENT**, **NUMBER**, **LPAREN**}
 
 - `bexpr` -> `bterm` `bexpr'`
   - F1(`bexpr`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
@@ -96,35 +102,3 @@
 - `bfactor` -> **NOT** `bfactor` | **LPAREN** `bexpr` **RPAREN** | **TRUE** | **FALSE**
   - F1(`bfactor`) = {**NOT**, **LPAREN**, **TRUE**, **FALSE**}
   - FO1(`bfactor`) = {**AND**, **OR**, **THEN**, **RPAREN**}
-
-- `ident` -> **IDENT**
-  - F1(`ident`) = {**IDENT**}
-  - FO1(`ident`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `dent` -> e | `letter` `dent` | `digit09` `dent`
-  - F1(`dent`) = {**IDENT**, **NUMBER**, e}
-  - FO1(`dent`) = {**ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `letter` -> **IDENT**
-  - F1(`letter`) = {**IDENT**}
-  - FO1(`letter`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `number` -> **NUMBER**
-  - F1(`number`) = {**NUMBER**}
-  - FO1(`number`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-
-- `umber` -> e | `digit09` `umber`
-  - F1(`umber`) = {**NUMBER**, e}
-  - FO1(`umber`) = {**PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
-
-- `sign` -> e | **PLUS** | **MINUS**
-  - F1(`sign`) = {**PLUS**, **MINUS**, e}
-  - FO1(`sign`) = {**NUMBER**}
-
-- `digit09` -> **NUMBER**
-  - F1(`digit09`) = {**NUMBER**}
-  - FO1(`digit09`) = {**IDENT**, **NUMBER**, **ASSIGN**, **COMMA**, **RPAREN**, **PLUS**, **MINUS**, **SEMI**}
-
-- `digit19` -> **NUMBER**
-  - F1(`digit19`) = {**NUMBER**}
-  - FO1(`digit19`) = {**NUMBER**, **PLUS**, **MINUS**, **SEMI**, **COMMA**, **RPAREN**}
