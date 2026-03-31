@@ -5,6 +5,7 @@ import PlayIcon from "lucide-solid/icons/play";
 import { Accessor, Component, createSignal, For, Show } from "solid-js";
 
 import { CodeLine } from "~/components/code-line";
+import { ControlsInfo } from "~/components/controls-info";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -121,13 +122,13 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
         };
 
         return (
-          <div class="flex h-screen w-full flex-col items-center justify-center gap-6 p-6">
+          <div class="flex h-screen w-full flex-col items-center justify-center gap-6 pt-6">
             <Card class="min-h-0 w-5xl max-w-full flex-1 overflow-hidden">
               <CardContent class="flex h-full flex-row p-0">
                 <div
                   ref={codeContainer}
                   onScroll={handleScroll}
-                  class="w-3/5 overflow-x-auto overflow-y-auto border-r border-border font-mono text-sm"
+                  class="w-3/5 overflow-x-auto overflow-y-auto border-r border-border bg-primary-900 font-mono text-sm"
                   style={{ "white-space": "pre" }}
                 >
                   <div class="flex flex-col gap-0 py-3">
@@ -259,17 +260,21 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                     </Show>
                   </Button>
 
-                  <Button
-                    variant="default"
-                    size="icon"
-                    class="cursor-pointer transition-all"
-                    classList={{
-                      "opacity-50 scale-95": lastPressedButton() === "next",
-                    }}
-                    onClick={nextStep}
-                  >
-                    <ChevronRightIcon class="text-primary-900" />
-                  </Button>
+                  <div class="relative">
+                    <Button
+                      variant="default"
+                      size="icon"
+                      class="cursor-pointer transition-all"
+                      classList={{
+                        "opacity-50 scale-95": lastPressedButton() === "next",
+                      }}
+                      onClick={nextStep}
+                    >
+                      <ChevronRightIcon class="text-primary-900" />
+                    </Button>
+
+                    <ControlsInfo />
+                  </div>
                 </div>
 
                 <div class="flex w-full items-center justify-end">

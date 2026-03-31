@@ -1,6 +1,5 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["messages.ts"],
   "experimentalSortImports": {},
   "experimentalTailwindcss": {
     "stylesheet": "./src/index.css",

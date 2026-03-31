@@ -385,6 +385,14 @@
   --animate-fade-slide-out: fade-slide-out 200ms ease-out both;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
 .left-right {
   transform-origin: 0% 50%;
 }

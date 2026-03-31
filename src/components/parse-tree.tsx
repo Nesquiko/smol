@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { Accessor, Component, createEffect } from "solid-js";
 
 import { ParseTreeNode } from "~/lib/types";
+import { cn } from "~/lib/ui-utils";
 
 type Margins = {
   top: number;
@@ -12,6 +13,7 @@ type Margins = {
 
 interface ParseTreeProps {
   tree: Accessor<ParseTreeNode>;
+  class?: string;
 }
 
 export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
@@ -20,11 +22,14 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   createEffect(() => {
     if (!svgRef || !props.tree) return;
 
-    const width: number = 1200;
-    const height: number = 800;
-    const margin: Margins = { top: 40, right: 40, bottom: 40, left: 40 };
-
     const svg = d3.select<SVGSVGElement, unknown>(svgRef);
+    const container: HTMLElement | null = svgRef.parentElement;
+
+    if (!container) return;
+
+    const width: number = container.clientWidth;
+    const height: number = container.clientHeight;
+    const margin: Margins = { top: 40, right: 40, bottom: 40, left: 40 };
 
     let g = svg.select<SVGGElement>("g.tree-g");
     if (g.empty()) {
@@ -39,10 +44,10 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
     const hierarchy: d3.HierarchyNode<ParseTreeNode> = d3.hierarchy<ParseTreeNode>(props.tree());
     const nodeCount: number = hierarchy.descendants().length;
 
-    const baseRadius: number = 20;
+    const baseRadius: number = 12;
     const scaleFactor: number = Math.max(1, 1 - nodeCount / 50);
     const radius: number = baseRadius * scaleFactor;
-    const fontSize: number = Math.max(12, 16 * scaleFactor);
+    const fontSize: number = Math.max(12, 8 * scaleFactor);
 
     const tree: d3.TreeLayout<ParseTreeNode> = d3
       .tree<ParseTreeNode>()
@@ -124,10 +129,9 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   return (
     <svg
       ref={svgRef}
-      class="max-h-full max-w-full"
+      class={cn("h-full w-full", props.class)}
       style={{
         display: "block",
-        "aspect-ratio": "600 / 400",
       }}
     />
   );

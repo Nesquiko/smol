@@ -28,7 +28,7 @@
 After tokenization, `ident` and `number` were replaced in parser rules by
 **IDENT** and **NUMBER**, and character rules `dent`, `letter`,
 `umber`, `sign`, `digit09`, and `digit19` were removed because they are
-handled by the lexer. Therefore the parser `F1` and `FO1` sets are
+handled by the lexer. Therefore, the parser `F1` and `FO1` sets are
 computed only over token symbols.
 
 - `program` -> **BEGIN** `statement_list` **END**
