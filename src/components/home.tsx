@@ -39,6 +39,7 @@ export const Home = () => {
 
           <Match when={currentPage() === "syntax"}>
             <SyntaxScreen
+              tokens={tokens}
               onContinue={() => setCurrentPage("results")}
               onBack={() => setCurrentPage("lex")}
             />

@@ -1,6 +1,5 @@
 import TreePineIcon from "lucide-solid/icons/tree-pine";
-import { Component, createEffect, createSignal, For } from "solid-js";
-
+import {Accessor, Component, createEffect, createSignal, For} from "solid-js";
 import { ParseTree } from "~/components/parse-tree";
 import { Stack } from "~/components/stack";
 import { SyntaxControls } from "~/components/syntax-controls";
@@ -8,9 +7,10 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { LOGS_EXAMPLE } from "~/lib/data/examples";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
-import { BufferType, ParseTreeNode, StackType } from "~/lib/types";
+import {BufferType, ParseTreeNode, StackType, Token} from "~/lib/types";
 
 interface SyntaxScreenProps {
+  tokens: Accessor<Array<Token>>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -81,6 +81,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props: SyntaxScreenPr
       </div>
 
       <SyntaxControls
+        tokens={props.tokens}
         buffer={buffer}
         setBuffer={setBuffer}
         setTree={setTree}
