@@ -45,10 +45,8 @@ export const useAutoStep = (nextStep: () => void, previousStep: () => void): Use
   createEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (KEYS_PREVIOUS.includes(e.key)) {
-        blink("previous");
         previousStep();
       } else if (KEYS_NEXT.includes(e.key)) {
-        blink("next");
         nextStep();
       } else if (KEYS_FORWARD.includes(e.key)) {
         blink("play");

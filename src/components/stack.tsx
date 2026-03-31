@@ -1,5 +1,6 @@
 import GalleryVerticalIcon from "lucide-solid/icons/gallery-vertical";
 import { Accessor, Component, For } from "solid-js";
+import { Motion, Presence } from "solid-motionone";
 
 import { TransitionTable } from "~/components/transition-table";
 import { Card } from "~/components/ui/card";
@@ -7,9 +8,10 @@ import { Dollar, NonTerminal, StackItem, StackType, TokenType } from "~/lib/type
 
 interface StackProps {
   stack: Accessor<StackType>;
+  cardRef?: (el: HTMLDivElement) => void;
 }
 
-export const Stack: Component<StackProps> = (props: StackProps) => {
+export const Stack: Component<StackProps> = (props) => {
   const label = (item: StackItem): TokenType | NonTerminal | Dollar => {
     if (typeof item === "object") return item.type;
     return item;
@@ -17,22 +19,45 @@ export const Stack: Component<StackProps> = (props: StackProps) => {
 
   return (
     <div class="relative h-full">
-      {/* SCROLL CONTAINER */}
-      <Card class="no-scrollbar flex h-full min-h-0 w-24 flex-col overflow-y-auto bg-primary-700">
+      <Card
+        ref={props.cardRef}
+        class="no-scrollbar flex h-full min-h-0 w-24 flex-col overflow-y-auto bg-primary-700"
+      >
         <div class="z-20 mt-auto flex flex-col items-center gap-0">
           <For each={props.stack().toReversed()}>
             {(item, index) => (
-              <div class="w-full p-[2px]">
-                <div
-                  class="overflow-hidden bg-primary-600 text-center text-xs text-ellipsis whitespace-nowrap"
-                  classList={{
-                    "rounded-b-md": index() === props.stack().length - 1,
-                    "rounded-t-md": index() === 0,
+              <Presence exitBeforeEnter={false}>
+                <Motion.div
+                  class="w-full p-[2px]"
+                  initial={{
+                    opacity: 0,
+                    y: index() === 0 ? -500 : 0,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    y: -60,
+                    transition: { duration: 0.2, easing: [0.32, 0, 0.67, 0] },
+                  }}
+                  transition={{
+                    duration: 0.6,
+                    easing: [0.33, 1, 0.68, 1], // cubic-bezier ease-out-cubic
                   }}
                 >
-                  {label(item)}
-                </div>
-              </div>
+                  <div
+                    class="overflow-hidden bg-primary-600 text-center text-xs text-ellipsis whitespace-nowrap"
+                    classList={{
+                      "rounded-b-md": index() === props.stack().length - 1,
+                      "rounded-t-md": index() === 0,
+                    }}
+                  >
+                    {label(item)}
+                  </div>
+                </Motion.div>
+              </Presence>
             )}
           </For>
         </div>

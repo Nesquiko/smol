@@ -1,16 +1,29 @@
+// components/syntax-controls.tsx
+
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
-import {Accessor, Component, createSignal, For, Setter, Show} from "solid-js";
+import {
+  Accessor,
+  Component,
+  createSignal,
+  For,
+  Setter,
+  Show,
+} from "solid-js";
 
 import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
 import { BufferType, ParseTreeNode, StackType, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
-import {Motion} from "solid-motionone";
-import {Tooltip, TooltipContent, TooltipTrigger} from "~/components/ui/tooltip";
+import { Motion } from "solid-motionone";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 interface SyntaxControlsProps {
   tokens: Accessor<Array<Token>>;
@@ -21,57 +34,46 @@ interface SyntaxControlsProps {
   withNavigation: boolean;
   onBack: () => void;
   onContinue: () => void;
+  onFlyToken: (fromRect: DOMRect, label: string) => void;
   class?: string;
 }
 
 export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [isJumping, setIsJumping] = createSignal(false);
-  const [flyingToken, setFlyingToken] = createSignal<{
-    token: Token;
-    fromRect: DOMRect | null;
-  } | null>(null);
+
+  // Refs for each tape cell so we can measure their positions
+  const cellRefs: Array<HTMLDivElement | undefined> = [];
 
   const performStep = (direction: "next" | "previous") => {
     if (direction === "next") {
+      const idx = currentIndex();
+      const cellEl = cellRefs[idx];
+      if (cellEl) {
+        const fromRect = cellEl.getBoundingClientRect();
+        const token = props.tokens()[idx];
+        if (token) {
+          props.onFlyToken(fromRect, token.type);
+        }
+      }
+
       setCurrentIndex((i) => Math.min(i + 1, props.tokens().length - 1));
+      setTimeout(() => props.setStack((prev) => [...prev, props.tokens()[idx]]), 350);
     } else {
       setCurrentIndex((i) => Math.max(i - 1, 0));
+      props.setStack((prev) => prev.length === 1 ? prev : prev.slice(0, -1));
     }
-
-    // props.setBuffer(...)
-    // props.setTree(...)
-    // props.setStack(...)
   };
 
   const nextStep = () => {
     blink("next");
-    animateTokenToStack();
     performStep("next");
   };
 
   const previousStep = () => {
+    if (currentIndex() === 0) return;
     blink("previous");
     performStep("previous");
-  };
-
-  const animateTokenToStack = () => {
-    const currentToken = props.tokens()[currentIndex()];
-    if (!currentToken) return;
-
-    // Get the position of the current token in the tape
-    const tapeElement = document.querySelector(
-      '[data-tape-token="' + currentIndex() + '"]',
-    );
-    if (!tapeElement) return;
-
-    const fromRect = tapeElement.getBoundingClientRect();
-
-    // Trigger animation
-    setFlyingToken({ token: currentToken, fromRect });
-
-    // Clear after animation
-    setTimeout(() => setFlyingToken(null), 600);
   };
 
   const jumpToIndex = async (targetIndex: number) => {
@@ -83,7 +85,6 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
 
     const steps = Math.abs(targetIndex - currentIndex());
     for (let i = 0; i < steps; i++) {
-      animateTokenToStack();
       performStep(direction);
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
@@ -95,13 +96,14 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     autoModeDirection,
     setAutoModeDirection,
     lastPressedButton,
-    blink
+    blink,
   } = useAutoStep(nextStep, previousStep);
 
   const cellWidth = 72;
   const cellGap = 8;
 
-  const translateX = (): number => -(currentIndex() * (cellWidth + cellGap));
+  const translateX = (): number =>
+    -(currentIndex() * (cellWidth + cellGap));
 
   return (
     <div
@@ -110,44 +112,17 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
         props.class,
       )}
     >
-      {/* Flying token overlay */}
-      <Show when={flyingToken()}>
-        {(token) => (
-          <Motion.div
-            class="fixed z-50 pointer-events-none flex h-9 w-18 items-center justify-center rounded-md bg-primary-400 text-xl shadow-2xl"
-            initial={{
-              left: `${token().fromRect?.left}px`,
-              top: `${token().fromRect?.top}px`,
-            }}
-            animate={{
-              left: "calc(100% - 150px)",
-              top: "calc(50% - 18px)",
-            }}
-            transition={{
-              easing: "ease-in-out",
-              duration: 0.6,
-            }}
-          >
-            {token().token.type ?? ""}
-          </Motion.div>
-        )}
-      </Show>
-
-      <div class="relative flex h-12 w-full items-center justify-center max-w-xl overflow-hidden">
+      <div class="relative flex h-12 w-full max-w-xl items-center justify-center overflow-hidden">
         <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
         <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
 
         <div
           class="absolute flex flex-row items-center gap-2"
-          style={{
-            left: `calc(50% - ${cellWidth / 2}px)`,
-          }}
+          style={{ left: `calc(50% - ${cellWidth / 2}px)` }}
         >
           <Motion.div
             class="flex flex-row items-center gap-2"
-            animate={{
-              x: translateX(),
-            }}
+            animate={{ x: translateX() }}
             transition={{ easing: "ease-in-out", duration: 0.3 }}
           >
             <For each={props.tokens()}>
@@ -155,8 +130,8 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
                 <Tooltip placement="top" openDelay={0} closeDelay={0}>
                   <TooltipTrigger
                     as="div"
-                    data-tape-token={index()}
-                    class="select-none text-xs flex h-9 w-18 items-center justify-center rounded-md text-xl shadow-2xl transition-colors duration-500 cursor-pointer"
+                    ref={(el: HTMLDivElement) => (cellRefs[index()] = el)}
+                    class="select-none text-xs flex h-9 w-18 items-center justify-center rounded-md shadow-2xl transition-all duration-300 cursor-pointer"
                     classList={{
                       "bg-primary-400": index() === currentIndex(),
                       "bg-primary-700": index() !== currentIndex(),
@@ -179,7 +154,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
           </Motion.div>
         </div>
 
-        <div class="absolute h-10 w-19 ring-2 ring-white rounded-lg pointer-events-none"/>
+        <div class="absolute h-10 w-19 rounded-lg ring-2 ring-white pointer-events-none" />
       </div>
 
       <div class="grid w-full grid-cols-3 gap-3 pb-6">
@@ -206,7 +181,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "previous",
             }}
             onClick={previousStep}
-            disabled={isJumping()}
+            disabled={isJumping() || currentIndex() === 0}
           >
             <ChevronLeftIcon class="text-primary-900" />
           </Button>
