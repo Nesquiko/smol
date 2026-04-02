@@ -42,14 +42,8 @@ export const TokenFlyAnimation: Component<TokenFlyAnimationProps> = (props) => {
             animate={{
               top: [`${ft.fromRect.top}px`, `${ft.toRect.top}px`],
               left: [`${ft.fromRect.left}px`, `${ft.toRect.left}px`],
-              width: [
-                `${ft.fromRect.width}px`,
-                `${ft.toRect.width}px`,
-              ],
-              height: [
-                `${ft.fromRect.height}px`,
-                `${ft.toRect.height}px`,
-              ],
+              width: [`${ft.fromRect.width}px`, `${ft.toRect.width}px`],
+              height: [`${ft.fromRect.height}px`, `${ft.toRect.height}px`],
               opacity: [1, 1, 0],
             }}
             transition={{ duration: 0.5, easing: "ease-in-out" }}

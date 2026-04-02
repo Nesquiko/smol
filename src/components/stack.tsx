@@ -1,6 +1,6 @@
 import GalleryVerticalIcon from "lucide-solid/icons/gallery-vertical";
 import { Accessor, Component, For } from "solid-js";
-import { Motion, Presence } from "solid-motionone";
+import { Motion } from "solid-motionone";
 
 import { TransitionTable } from "~/components/transition-table";
 import { Card } from "~/components/ui/card";
@@ -23,42 +23,30 @@ export const Stack: Component<StackProps> = (props) => {
         ref={props.cardRef}
         class="no-scrollbar flex h-full min-h-0 w-24 flex-col overflow-y-auto bg-primary-700"
       >
-        <div class="z-20 mt-auto flex flex-col items-center gap-0">
-          <For each={props.stack().toReversed()}>
-            {(item, index) => (
-              <Presence exitBeforeEnter={false}>
+        <div class="z-20 mt-auto flex flex-col-reverse items-center gap-0">
+          <For each={props.stack()}>
+            {(item) => {
+              const isDollar = (): boolean => label(item) === "$";
+
+              return (
                 <Motion.div
                   class="w-full p-[2px]"
-                  initial={{
-                    opacity: 0,
-                    y: index() === 0 ? -500 : 0,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    y: -60,
-                    transition: { duration: 0.2, easing: [0.32, 0, 0.67, 0] },
-                  }}
-                  transition={{
-                    duration: 0.6,
-                    easing: [0.33, 1, 0.68, 1], // cubic-bezier ease-out-cubic
-                  }}
+                  initial={{ opacity: 0, y: -500 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, easing: [0.33, 1, 0.68, 1] }}
                 >
                   <div
-                    class="overflow-hidden bg-primary-600 text-center text-xs text-ellipsis whitespace-nowrap"
+                    class="overflow-hidden rounded-md text-center text-xs text-ellipsis whitespace-nowrap"
                     classList={{
-                      "rounded-b-md": index() === props.stack().length - 1,
-                      "rounded-t-md": index() === 0,
+                      "bg-primary-400 text-primary-900": isDollar(),
+                      "bg-primary-600": !isDollar(),
                     }}
                   >
                     {label(item)}
                   </div>
                 </Motion.div>
-              </Presence>
-            )}
+              );
+            }}
           </For>
         </div>
 

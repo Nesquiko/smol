@@ -1,5 +1,3 @@
-// components/syntax-controls.tsx
-
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
 import PauseIcon from "lucide-solid/icons/pause";
@@ -7,23 +5,22 @@ import PlayIcon from "lucide-solid/icons/play";
 import {
   Accessor,
   Component,
+  createMemo,
+  createEffect,
   createSignal,
   For,
   Setter,
   Show,
 } from "solid-js";
+import { Motion } from "solid-motionone";
 
 import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
+import { buildParserSteps } from "~/lib/parsing/ll1-engine";
 import { BufferType, ParseTreeNode, StackType, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
-import { Motion } from "solid-motionone";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
 
 interface SyntaxControlsProps {
   tokens: Accessor<Array<Token>>;
@@ -31,6 +28,7 @@ interface SyntaxControlsProps {
   setBuffer: Setter<BufferType>;
   setTree: Setter<ParseTreeNode>;
   setStack: Setter<StackType>;
+  setLogs: Setter<string[]>;
   withNavigation: boolean;
   onBack: () => void;
   onContinue: () => void;
@@ -39,79 +37,99 @@ interface SyntaxControlsProps {
 }
 
 export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
-  const [currentIndex, setCurrentIndex] = createSignal(0);
+  const [stepIndex, setStepIndex] = createSignal(0);
   const [isJumping, setIsJumping] = createSignal(false);
 
-  // Refs for each tape cell so we can measure their positions
   const cellRefs: Array<HTMLDivElement | undefined> = [];
 
-  const performStep = (direction: "next" | "previous") => {
-    if (direction === "next") {
-      const idx = currentIndex();
-      const cellEl = cellRefs[idx];
-      if (cellEl) {
-        const fromRect = cellEl.getBoundingClientRect();
-        const token = props.tokens()[idx];
-        if (token) {
-          props.onFlyToken(fromRect, token.type);
+  const steps = createMemo(() => buildParserSteps(props.tokens()));
+
+  createEffect(() => {
+    const step = steps()[stepIndex()];
+    if (!step) return;
+
+    props.setStack(step.stack as StackType);
+    props.setBuffer(
+      step.bufferIndex !== undefined ? (props.tokens().slice(step.bufferIndex) as BufferType) : [],
+    );
+    props.setTree(step.tree);
+    props.setLogs(
+      steps()
+        .slice(0, stepIndex() + 1)
+        .map((s) => s.log),
+    );
+  });
+
+  const goTo = (index: number) => {
+    setStepIndex(Math.max(0, Math.min(index, steps().length - 1)));
+  };
+
+  const performStep = (dir: "next" | "previous") => {
+    const nextIndex = dir === "next" ? stepIndex() + 1 : stepIndex() - 1;
+    const clamped = Math.max(0, Math.min(nextIndex, steps().length - 1));
+
+    if (dir === "next") {
+      const nextStep = steps()[clamped];
+      if (nextStep?.action.kind === "match") {
+        const tokenIdx = nextStep.currentTokenIndex;
+        const cellEl = cellRefs[tokenIdx];
+        if (cellEl) {
+          props.onFlyToken(cellEl.getBoundingClientRect(), nextStep.action.symbol!);
         }
       }
-
-      setCurrentIndex((i) => Math.min(i + 1, props.tokens().length - 1));
-      setTimeout(() => props.setStack((prev) => [...prev, props.tokens()[idx]]), 350);
-    } else {
-      setCurrentIndex((i) => Math.max(i - 1, 0));
-      props.setStack((prev) => prev.length === 1 ? prev : prev.slice(0, -1));
     }
+
+    goTo(clamped);
   };
 
   const nextStep = () => {
+    if (stepIndex() >= steps().length - 1) return;
     blink("next");
     performStep("next");
   };
 
   const previousStep = () => {
-    if (currentIndex() === 0) return;
+    if (stepIndex() === 0) return;
     blink("previous");
     performStep("previous");
   };
 
-  const jumpToIndex = async (targetIndex: number) => {
-    if (targetIndex === currentIndex() || isJumping()) return;
+  const jumpToStepForToken = async (tokenIndex: number) => {
+    if (isJumping()) return;
+
+    const targetStepIndex = steps().reduce((best, step, i) => {
+      if (step.currentTokenIndex <= tokenIndex) return i;
+      return best;
+    }, 0);
+
+    if (targetStepIndex === stepIndex()) return;
 
     setIsJumping(true);
-    const direction: "next" | "previous" =
-      targetIndex > currentIndex() ? "next" : "previous";
+    const direction = targetStepIndex > stepIndex() ? "next" : "previous";
+    const count = Math.abs(targetStepIndex - stepIndex());
 
-    const steps = Math.abs(targetIndex - currentIndex());
-    for (let i = 0; i < steps; i++) {
+    for (let i = 0; i < count; i++) {
       performStep(direction);
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 80));
     }
 
     setIsJumping(false);
   };
 
-  const {
-    autoModeDirection,
-    setAutoModeDirection,
-    lastPressedButton,
-    blink,
-  } = useAutoStep(nextStep, previousStep);
+  const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
+    nextStep,
+    previousStep,
+  );
 
   const cellWidth = 72;
   const cellGap = 8;
 
-  const translateX = (): number =>
-    -(currentIndex() * (cellWidth + cellGap));
+  const currentTokenIndex = createMemo(() => steps()[stepIndex()]?.currentTokenIndex ?? 0);
+
+  const translateX = (): number => -(currentTokenIndex() * (cellWidth + cellGap));
 
   return (
-    <div
-      class={cn(
-        "flex w-full flex-col items-center justify-center gap-6 px-6",
-        props.class,
-      )}
-    >
+    <div class={cn("flex w-full flex-col items-center justify-center gap-6 px-6", props.class)}>
       <div class="relative flex h-12 w-full max-w-xl items-center justify-center overflow-hidden">
         <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
         <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
@@ -128,23 +146,26 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
             <For each={props.tokens()}>
               {(token: Token, index: Accessor<number>) => (
                 <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                  {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                  {/* @ts-expect-error */}
                   <TooltipTrigger
-                    as="div"
                     ref={(el: HTMLDivElement) => (cellRefs[index()] = el)}
-                    class="select-none text-xs flex h-9 w-18 items-center justify-center rounded-md shadow-2xl transition-all duration-300 cursor-pointer"
+                    class="flex h-9 w-18 cursor-pointer items-center justify-center rounded-md text-xs shadow-2xl transition-all duration-300 select-none"
                     classList={{
-                      "bg-primary-400": index() === currentIndex(),
-                      "bg-primary-700": index() !== currentIndex(),
+                      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                      // @ts-expect-error
+                      "bg-primary-400 text-primary-900": index() === currentTokenIndex(),
+                      "bg-primary-700": index() !== currentTokenIndex(),
                       "opacity-50": isJumping(),
                     }}
-                    onClick={() => jumpToIndex(index())}
+                    onClick={() => jumpToStepForToken(index())}
                   >
                     {token.type ?? ""}
                   </TooltipTrigger>
 
-                  <TooltipContent class="flex flex-row gap-2 items-center justify-start -translate-y-2">
+                  <TooltipContent class="flex -translate-y-2 flex-row items-center justify-start gap-2">
                     <span class="text-xs">{token.type}</span>
-                    <span class="font-medium text-xs text-muted-foreground">
+                    <span class="text-xs font-medium text-muted-foreground">
                       {token.line}:{token.colStart}-{token.colEnd}
                     </span>
                   </TooltipContent>
@@ -154,7 +175,13 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
           </Motion.div>
         </div>
 
-        <div class="absolute h-10 w-19 rounded-lg ring-2 ring-white pointer-events-none" />
+        <div class="pointer-events-none absolute h-10 w-19 rounded-lg ring-2 ring-white" />
+      </div>
+
+      <div class="-mt-4 flex flex-row items-center justify-center gap-2 text-xs text-muted-foreground">
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{stepIndex() + 1}</span>
+        <span class="select-none">/</span>
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{steps().length}</span>
       </div>
 
       <div class="grid w-full grid-cols-3 gap-3 pb-6">
@@ -181,7 +208,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "previous",
             }}
             onClick={previousStep}
-            disabled={isJumping() || currentIndex() === 0}
+            disabled={isJumping() || stepIndex() === 0}
           >
             <ChevronLeftIcon class="text-primary-900" />
           </Button>
@@ -195,9 +222,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "play",
             }}
             onClick={() =>
-              setAutoModeDirection(
-                autoModeDirection() === "none" ? "forward" : "none",
-              )
+              setAutoModeDirection(autoModeDirection() === "none" ? "forward" : "none")
             }
             disabled={isJumping()}
           >
@@ -218,7 +243,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
                 "opacity-50 scale-95": lastPressedButton() === "next",
               }}
               onClick={nextStep}
-              disabled={isJumping()}
+              disabled={isJumping() || stepIndex() >= steps().length - 1}
             >
               <ChevronRightIcon class="text-primary-900" />
             </Button>

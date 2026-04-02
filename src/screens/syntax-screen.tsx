@@ -1,23 +1,13 @@
-// screens/syntax-screen.tsx
+import MouseIcon from "lucide-solid/icons/mouse";
+import MoveIcon from "lucide-solid/icons/move";
+import { Accessor, Component, createEffect, createSignal, For } from "solid-js";
 
-import TreePineIcon from "lucide-solid/icons/tree-pine";
-import {
-  Accessor,
-  Component,
-  createEffect,
-  createSignal,
-  For,
-} from "solid-js";
 import { ParseTree } from "~/components/parse-tree";
 import { Stack } from "~/components/stack";
 import { SyntaxControls } from "~/components/syntax-controls";
-import {
-  FlyingToken,
-  TokenFlyAnimation,
-} from "~/components/token-fly-animation";
+import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { LOGS_EXAMPLE } from "~/lib/data/examples";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
 import { BufferType, ParseTreeNode, StackType, Token } from "~/lib/types";
 
@@ -27,13 +17,14 @@ interface SyntaxScreenProps {
   onBack: () => void;
 }
 
-let flyId = 0;
+let flyId: number = 0;
 
 export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [buffer, setBuffer] = createSignal<BufferType>([]);
   const [tree, setTree] = createSignal<ParseTreeNode>(TREE_TEST_SMALL);
   const [stack, setStack] = createSignal<StackType>(["$"]);
   const [flyingTokens, setFlyingTokens] = createSignal<Array<FlyingToken>>([]);
+  const [logs, setLogs] = createSignal<string[]>([]);
 
   let stackCardRef: HTMLDivElement | undefined;
   let logsContainerRef: HTMLDivElement | undefined;
@@ -47,32 +38,32 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const handleFlyToken = (fromRect: DOMRect, label: string) => {
     if (!stackCardRef) return;
 
-    const stackRect = stackCardRef.getBoundingClientRect();
+    const stackRect: DOMRect = stackCardRef.getBoundingClientRect();
 
-    // Target: top of the stack card, same width as a stack item cell
-    // Stack items have w-24 card with p-[2px] padding, inner div fills it
-    const itemHeight = 20; // approximate px height of one stack row
-    const toRect = new DOMRect(
-      stackRect.left + 2,       // p-[2px] padding
-      stackRect.top,            // fly to the top of the card
-      stackRect.width - 4,      // account for padding on both sides
+    const itemHeight: number = 20;
+    const toRect: DOMRect = new DOMRect(
+      stackRect.left + 2,
+      stackRect.top,
+      stackRect.width - 4,
       itemHeight,
     );
 
-    const id = flyId++;
-    setFlyingTokens((prev) => [...prev, { id, label, fromRect, toRect }]);
+    const id: number = flyId++;
+    setFlyingTokens(
+      (prev: Array<FlyingToken>): Array<FlyingToken> => [...prev, { id, label, fromRect, toRect }],
+    );
   };
 
   const handleFlyComplete = (id: number) => {
-    setFlyingTokens((prev) => prev.filter((ft) => ft.id !== id));
+    setFlyingTokens(
+      (prev: Array<FlyingToken>): Array<FlyingToken> =>
+        prev.filter((ft: FlyingToken): boolean => ft.id !== id),
+    );
   };
 
   return (
     <div class="relative flex h-screen w-full flex-col items-center justify-center gap-6">
-      <TokenFlyAnimation
-        flyingTokens={flyingTokens}
-        onComplete={handleFlyComplete}
-      />
+      <TokenFlyAnimation flyingTokens={flyingTokens} onComplete={handleFlyComplete} />
 
       <div class="flex min-h-0 w-full max-w-5xl flex-1 flex-row items-stretch justify-center gap-6 p-6 pb-0">
         <Card class="relative flex h-full w-full flex-1 items-center justify-center p-0">
@@ -92,13 +83,20 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent
-              value="tree"
-              class="mt-0 flex-1 rounded-b-lg bg-primary-900"
-            >
+            <TabsContent value="tree" class="mt-0 flex-1 rounded-b-lg bg-primary-900">
               <CardContent class="relative flex h-full w-full items-center justify-center overflow-hidden rounded-b-lg p-0">
                 <ParseTree tree={tree} class="z-20" />
-                <TreePineIcon class="absolute top-1/2 left-1/2 z-10 size-24 -translate-x-1/2 -translate-y-1/2 text-primary-800/50" />
+
+                <div class="absolute bottom-3 left-3 z-30 flex flex-row items-center justify-center gap-2 text-muted">
+                  <div class="flex flex-row items-center justify-center gap-1">
+                    <MouseIcon class="size-4 select-none" />
+                    <span class="text-xs select-none">Zoom</span>
+                  </div>
+                  <div class="flex flex-row items-center justify-center gap-1">
+                    <MoveIcon class="size-4 select-none" />
+                    <span class="text-xs select-none">Move</span>
+                  </div>
+                </div>
               </CardContent>
             </TabsContent>
 
@@ -110,9 +108,18 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                 ref={logsContainerRef}
                 class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-b-lg p-2 px-4"
               >
-                <For each={LOGS_EXAMPLE}>
-                  {(log: string) => (
-                    <p class="w-full break-words whitespace-pre-wrap text-left text-xs leading-tight">
+                <For each={logs()}>
+                  {(log: string, index) => (
+                    <p
+                      class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
+                      classList={{
+                        "text-white font-bold": log.startsWith("Accept"),
+                        "text-red-400": log.startsWith("Error"),
+                        "text-primary-300": log.startsWith("Match"),
+                        "text-primary-400": log.startsWith("Expand"),
+                      }}
+                    >
+                      <span class="mr-2 text-primary-500 select-none">{index() + 1}.</span>
                       {log}
                     </p>
                   )}
@@ -122,10 +129,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
           </Tabs>
         </Card>
 
-        <Stack
-          stack={stack}
-          cardRef={(el) => (stackCardRef = el)}
-        />
+        <Stack stack={stack} cardRef={(el) => (stackCardRef = el)} />
       </div>
 
       <SyntaxControls
@@ -134,6 +138,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
         setBuffer={setBuffer}
         setTree={setTree}
         setStack={setStack}
+        setLogs={setLogs}
         withNavigation={true}
         onBack={props.onBack}
         onContinue={props.onContinue}

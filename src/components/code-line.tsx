@@ -35,15 +35,10 @@ export const CodeLine: Component<CodeLineProps> = (props: CodeLineProps) => {
         <span
           class="transition-colors duration-100"
           classList={{
-            // rounded edges ONLY on boundaries
             "rounded-l-xs": isStart,
             "rounded-r-xs": isEnd,
-
-            // caret overrides everything
             "bg-primary-200 text-primary-900 animate-[blink_1s_step-end_infinite]":
               isCaret && !isInToken,
-
-            // token highlight
             "bg-yellow-200 text-black": isInToken,
           }}
         >
@@ -52,9 +47,7 @@ export const CodeLine: Component<CodeLineProps> = (props: CodeLineProps) => {
       );
     });
 
-    // ✅ handle caret at END separately
-    const caretAtEnd =
-      props.caret().line === props.lineNum() && props.caret().col === props.line.length;
+    const caretAtEnd: boolean = props.caret().line === props.lineNum() && props.caret().col === props.line.length;
 
     if (caretAtEnd) {
       result.push(

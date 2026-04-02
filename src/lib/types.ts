@@ -1,11 +1,12 @@
 export type Token = {
   type: TokenType;
+  value: string;
   line: number;
   colStart: number;
   colEnd: number;
 };
 
-export type TokenType = Identifier | Keyword | Operator | Punctuation;
+export type TokenType = Identifier | Keyword | Operator | Punctuation | Dollar;
 
 export type Identifier = "IDENT";
 
@@ -32,7 +33,7 @@ export type Page = "input" | "lex" | "syntax" | "results";
 
 export type ParseTreeNode = {
   id: string;
-  label: string;
+  data: Token | NonTerminal | TokenType | Dollar;
   children?: Array<ParseTreeNode>;
 };
 
@@ -65,7 +66,8 @@ export type NonTerminal =
   | "bexpr'"
   | "bterm"
   | "bterm'"
-  | "bfactor";
+  | "bfactor"
+  | "ε";
 
 export type Dollar = "$";
 
@@ -80,3 +82,24 @@ type Range<N extends number, Result extends number[] = []> = Result["length"] ex
   : Range<N, [...Result, Result["length"]]>;
 
 export type Rule = Range<34>;
+
+export type ParserActionKind = "init" | "expand" | "match" | "accept" | "error";
+
+export interface ParserAction {
+  kind: ParserActionKind;
+  ruleNumber?: number;
+  symbol?: string;
+  tokenValue?: string;
+  errorMessage?: string;
+}
+
+export interface ParserStep {
+  stack: string[];
+  bufferIndex: number;
+  tree: ParseTreeNode;
+  log: string;
+  action: ParserAction;
+  currentTokenIndex: number;
+}
+
+export type NodeType = "eof" | "epsilon" | "token" | "non-terminal" | "unknown";
