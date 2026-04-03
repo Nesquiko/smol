@@ -92,7 +92,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                 <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
                   <TabsTrigger
                     value="code"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <CodeIcon class="inline-block size-4 rotate-90" />
@@ -100,7 +100,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <TerminalIcon class="inline-block size-4 rotate-90" />

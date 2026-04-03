@@ -20,12 +20,12 @@ import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
+import { BufferType, SyntaxParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 interface SyntaxControlsProps {
   tokens: Accessor<Array<Token>>;
-  steps: Accessor<Array<ParserStep>>;
+  steps: Accessor<Array<SyntaxParserStep>>;
   stepIndex: Accessor<number>;
   setStepIndex: Setter<number>;
   buffer: Accessor<BufferType>;
@@ -73,7 +73,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
 
     if (dir === "next") {
       const nextStep = props.steps()[clamped];
-      if (nextStep?.action.kind === "match") {
+      if (nextStep?.action.type === "match") {
         const tokenIdx = nextStep.currentTokenIndex;
         const cellEl = cellRefs[tokenIdx];
         if (cellEl) {

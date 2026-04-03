@@ -10,6 +10,7 @@ import { Motion } from "solid-motionone";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+import { DOLLAR, EPSILON } from "~/lib/data/constants";
 import {
   Dollar,
   Margins,
@@ -45,8 +46,8 @@ const NODE_COLORS: Record<NodeType, string> = {
 const getNodeType = (data: Token | NonTerminal | Dollar | string): NodeType => {
   if (!data) return "unknown";
   if (typeof data === "string") {
-    if (data === "$") return "eof";
-    if (data === "ε") return "epsilon";
+    if (data === DOLLAR) return "eof";
+    if (data === EPSILON) return "epsilon";
     return "non-terminal";
   }
   if (typeof data === "object" && "value" in data) return "token";
@@ -65,7 +66,7 @@ const getNodeRadius = (d: d3.HierarchyPointNode<ParseTreeNode>): number =>
   d.depth === 0 ? ROOT_RADIUS : RADIUS;
 
 const getNodeColor = (node: ParseTreeNode): string => {
-  if (!node.visited) return "var(--color-primary-800)";
+  if (!node.processed) return "var(--color-primary-800)";
   return NODE_COLORS[getNodeType(node.data)];
 };
 

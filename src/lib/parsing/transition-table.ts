@@ -1,9 +1,6 @@
-import { NonTerminal, TokenType } from "~/lib/types";
+import { ParseTable, Rules } from "~/lib/types";
 
-export type RuleNumber = number;
-
-// PARSE_TABLE[nonTerminal][terminal] = rule number
-export const PARSE_TABLE: Record<string, Record<string, RuleNumber>> = {
+export const PARSE_TABLE: ParseTable = {
   program: { BEGIN: 1 },
   statement_list: { IDENT: 2, READ: 2, WRITE: 2, IF: 2 },
   "statement_list'": { IDENT: 4, READ: 4, WRITE: 4, IF: 4, END: 3 },
@@ -24,42 +21,48 @@ export const PARSE_TABLE: Record<string, Record<string, RuleNumber>> = {
   bfactor: { NOT: 31, LPAREN: 32, TRUE: 33, FALSE: 34 },
 };
 
-export const RULES: Record<RuleNumber, { lhs: string; rhs: Array<NonTerminal | TokenType | "$"> }> =
-  {
-    1: { lhs: "program", rhs: ["BEGIN", "statement_list", "END"] },
-    2: { lhs: "statement_list", rhs: ["statement", "statement_list'"] },
-    3: { lhs: "statement_list'", rhs: [] },
-    4: { lhs: "statement_list'", rhs: ["statement_list"] },
-    5: { lhs: "statement", rhs: ["IDENT", "ASSIGN", "expression", "SEMI"] },
-    6: { lhs: "statement", rhs: ["READ", "LPAREN", "id_list", "RPAREN", "SEMI"] },
-    7: { lhs: "statement", rhs: ["WRITE", "LPAREN", "expr_list", "RPAREN", "SEMI"] },
-    8: { lhs: "statement", rhs: ["IF", "bexpr", "THEN", "statement", "else"] },
-    9: { lhs: "else", rhs: [] }, // ε
-    10: { lhs: "else", rhs: ["ELSE", "statement"] },
-    11: { lhs: "id_list", rhs: ["IDENT", "id_list'"] },
-    12: { lhs: "id_list'", rhs: [] }, // ε
-    13: { lhs: "id_list'", rhs: ["COMMA", "id_list"] },
-    14: { lhs: "expr_list", rhs: ["expression", "expr_list'"] },
-    15: { lhs: "expr_list'", rhs: [] }, // ε
-    16: { lhs: "expr_list'", rhs: ["COMMA", "expr_list"] },
-    17: { lhs: "expression", rhs: ["factor", "expression'"] },
-    18: { lhs: "expression'", rhs: [] }, // ε
-    19: { lhs: "expression'", rhs: ["op", "factor", "expression'"] },
-    20: { lhs: "factor", rhs: ["IDENT"] },
-    21: { lhs: "factor", rhs: ["NUMBER"] },
-    22: { lhs: "factor", rhs: ["LPAREN", "expression", "RPAREN"] },
-    23: { lhs: "op", rhs: ["PLUS"] },
-    24: { lhs: "op", rhs: ["MINUS"] },
-    25: { lhs: "bexpr", rhs: ["bterm", "bexpr'"] },
-    26: { lhs: "bexpr'", rhs: [] }, // ε
-    27: { lhs: "bexpr'", rhs: ["OR", "bterm", "bexpr'"] },
-    28: { lhs: "bterm", rhs: ["bfactor", "bterm'"] },
-    29: { lhs: "bterm'", rhs: [] }, // ε
-    30: { lhs: "bterm'", rhs: ["AND", "bfactor", "bterm'"] },
-    31: { lhs: "bfactor", rhs: ["NOT", "bfactor"] },
-    32: { lhs: "bfactor", rhs: ["LPAREN", "bexpr", "RPAREN"] },
-    33: { lhs: "bfactor", rhs: ["TRUE"] },
-    34: { lhs: "bfactor", rhs: ["FALSE"] },
-  };
+export const RULES: Rules = {
+  1: { left: "program", right: ["BEGIN", "statement_list", "END"] },
+  2: { left: "statement_list", right: ["statement", "statement_list'"] },
+  3: { left: "statement_list'", right: [] },
+  4: { left: "statement_list'", right: ["statement_list"] },
+  5: { left: "statement", right: ["IDENT", "ASSIGN", "expression", "SEMI"] },
+  6: { left: "statement", right: ["READ", "LPAREN", "id_list", "RPAREN", "SEMI"] },
+  7: { left: "statement", right: ["WRITE", "LPAREN", "expr_list", "RPAREN", "SEMI"] },
+  8: { left: "statement", right: ["IF", "bexpr", "THEN", "statement", "else"] },
+  9: { left: "else", right: [] },
+  10: { left: "else", right: ["ELSE", "statement"] },
+  11: { left: "id_list", right: ["IDENT", "id_list'"] },
+  12: { left: "id_list'", right: [] },
+  13: { left: "id_list'", right: ["COMMA", "id_list"] },
+  14: { left: "expr_list", right: ["expression", "expr_list'"] },
+  15: { left: "expr_list'", right: [] },
+  16: { left: "expr_list'", right: ["COMMA", "expr_list"] },
+  17: { left: "expression", right: ["factor", "expression'"] },
+  18: { left: "expression'", right: [] },
+  19: { left: "expression'", right: ["op", "factor", "expression'"] },
+  20: { left: "factor", right: ["IDENT"] },
+  21: { left: "factor", right: ["NUMBER"] },
+  22: { left: "factor", right: ["LPAREN", "expression", "RPAREN"] },
+  23: { left: "op", right: ["PLUS"] },
+  24: { left: "op", right: ["MINUS"] },
+  25: { left: "bexpr", right: ["bterm", "bexpr'"] },
+  26: { left: "bexpr'", right: [] },
+  27: { left: "bexpr'", right: ["OR", "bterm", "bexpr'"] },
+  28: { left: "bterm", right: ["bfactor", "bterm'"] },
+  29: { left: "bterm'", right: [] },
+  30: { left: "bterm'", right: ["AND", "bfactor", "bterm'"] },
+  31: { left: "bfactor", right: ["NOT", "bfactor"] },
+  32: { left: "bfactor", right: ["LPAREN", "bexpr", "RPAREN"] },
+  33: { left: "bfactor", right: ["TRUE"] },
+  34: { left: "bfactor", right: ["FALSE"] },
+};
 
-export const NON_TERMINALS = new Set(Object.keys(PARSE_TABLE));
+export const TERMINALS: Array<string> = Array.from(
+  new Set(
+    Object.values(PARSE_TABLE).flatMap(
+      (row: Record<string, number>): Array<string> => Object.keys(row),
+    ),
+  ),
+);
+export const NON_TERMINALS: Set<string> = new Set(Object.keys(PARSE_TABLE));

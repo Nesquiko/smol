@@ -1,4 +1,4 @@
-import { Accessor, For } from "solid-js";
+import { Accessor, createMemo, For } from "solid-js";
 
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
@@ -10,9 +10,34 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { TRANSITION_TABLE } from "~/lib/data/transition-table";
+import { PARSE_TABLE, TERMINALS } from "~/lib/parsing/transition-table";
+
+type TableRows = Array<{
+  cells: Array<string>;
+}>;
+
+type TableDisplay = {
+  header: Array<string>;
+  rows: TableRows;
+};
 
 export const TransitionTable = () => {
+  const table: Accessor<TableDisplay> = createMemo((): TableDisplay => {
+    const rows: TableRows = Object.entries(PARSE_TABLE).map(([nonTerminal, transitions]) => ({
+      cells: [
+        nonTerminal,
+        ...TERMINALS.map((t: string): string =>
+          transitions[t] !== undefined ? String(transitions[t]) : "",
+        ),
+      ],
+    }));
+
+    return {
+      header: ["", ...TERMINALS],
+      rows,
+    };
+  });
+
   return (
     <Dialog>
       <DialogTrigger
@@ -28,7 +53,7 @@ export const TransitionTable = () => {
         <Table class="w-full table-fixed border-collapse">
           <TableHeader>
             <TableRow>
-              <For each={TRANSITION_TABLE.header}>
+              <For each={table().header}>
                 {(header: string, index: Accessor<number>) => (
                   <TableHead
                     class="border-r hover:bg-white/5"
@@ -48,7 +73,7 @@ export const TransitionTable = () => {
           </TableHeader>
 
           <TableBody>
-            <For each={TRANSITION_TABLE.rows}>
+            <For each={table().rows}>
               {(row: { cells: Array<string> }) => (
                 <TableRow>
                   <For each={row.cells}>

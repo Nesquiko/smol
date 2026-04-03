@@ -4,6 +4,7 @@ import { Motion } from "solid-motionone";
 
 import { TransitionTable } from "~/components/transition-table";
 import { Card } from "~/components/ui/card";
+import { DOLLAR } from "~/lib/data/constants";
 import { Dollar, NonTerminal, StackItem, StackType, TokenType } from "~/lib/types";
 
 interface StackProps {
@@ -26,7 +27,7 @@ export const Stack: Component<StackProps> = (props) => {
         <div class="z-20 mt-auto flex flex-col-reverse items-center gap-0">
           <For each={props.stack()}>
             {(item) => {
-              const isDollar = (): boolean => label(item) === "$";
+              const isDollar = (): boolean => label(item) === DOLLAR;
 
               return (
                 <Motion.div

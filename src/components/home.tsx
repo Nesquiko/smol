@@ -1,8 +1,15 @@
 import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
-import { TOKENS_TEST } from "~/lib/data/test-data";
-import { buildParserSteps } from "~/lib/parsing/ll1-engine";
-import { Screen, ParserStep, Result, Token, SyntaxErrorMode, LexErrorMode } from "~/lib/types";
+import { TOKENS_TEST } from "~/lib/data/tokens-test";
+import { SyntaxParser } from "~/lib/parsing/syntax-parser";
+import {
+  Screen,
+  SyntaxParserStep,
+  Result,
+  Token,
+  SyntaxErrorMode,
+  LexErrorMode,
+} from "~/lib/types";
 import { InputScreen } from "~/screens/input-screen";
 import { LexConfigScreen } from "~/screens/lex-config-screen";
 import { LexScreen } from "~/screens/lex-screen";
@@ -25,8 +32,8 @@ export const Home = () => {
     setResult(res);
   };
 
-  const syntaxParserSteps: Accessor<Array<ParserStep>> = createMemo(
-    (): Array<ParserStep> => buildParserSteps(tokens(), onResult),
+  const syntaxParserSteps: Accessor<Array<SyntaxParserStep>> = createMemo(
+    (): Array<SyntaxParserStep> => new SyntaxParser(tokens(), onResult).parse(),
   );
 
   return (

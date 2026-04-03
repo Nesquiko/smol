@@ -1,4 +1,4 @@
-import { ParserStep, Token } from "~/lib/types";
+import { SyntaxParserStep, Token } from "~/lib/types";
 
 export type LexStats = {
   totalTokens: number;
@@ -41,7 +41,7 @@ export const computeLexStats = (tokens: Array<Token>): LexStats => {
   };
 };
 
-export const computeSyntaxStats = (steps: Array<ParserStep>): SyntaxStats => {
+export const computeSyntaxStats = (steps: Array<SyntaxParserStep>): SyntaxStats => {
   const rulesApplied = new Set<number>();
   let expansions = 0;
   let matches = 0;
@@ -51,7 +51,7 @@ export const computeSyntaxStats = (steps: Array<ParserStep>): SyntaxStats => {
 
   for (const step of steps) {
     if (step.stack.length > maxStackDepth) maxStackDepth = step.stack.length;
-    switch (step.action.kind) {
+    switch (step.action.type) {
       case "expand":
         expansions++;
         if (step.action.ruleNumber !== undefined) rulesApplied.add(step.action.ruleNumber);

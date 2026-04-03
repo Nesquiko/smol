@@ -10,19 +10,19 @@ import { SyntaxControls } from "~/components/syntax-controls";
 import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
+import { BufferType, SyntaxParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 
 const INITIAL_TREE: ParseTreeNode = {
   id: "-1",
   data: "program",
-  visited: false,
+  processed: false,
 } satisfies ParseTreeNode;
 
 type SyntaxTab = "tree" | "logs";
 
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;
-  steps: Accessor<Array<ParserStep>>;
+  steps: Accessor<Array<SyntaxParserStep>>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -32,7 +32,7 @@ let flyId: number = 0;
 export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [buffer, setBuffer] = createSignal<BufferType>([]);
   const [tree, setTree] = createSignal<ParseTreeNode>(INITIAL_TREE);
-  const [stack, setStack] = createSignal<StackType>(["$"]);
+  const [stack, setStack] = createSignal<StackType>([]);
   const [flyingTokens, setFlyingTokens] = createSignal<Array<FlyingToken>>([]);
   const [logs, setLogs] = createSignal<string[]>([]);
   const [stepIndex, setStepIndex] = createSignal(0);
@@ -91,7 +91,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
             <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
               <TabsTrigger
                 value="tree"
-                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                 style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
                 <GitBranchIcon class="inline-block size-4 rotate-90" />
@@ -99,7 +99,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                 style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
                 <TerminalIcon class="inline-block size-4 rotate-90" />
@@ -154,10 +154,10 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                       <p
                         class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
                         classList={{
-                          "text-white font-bold": log.startsWith("Accept"),
-                          "text-red-400": log.startsWith("Error"),
-                          "text-primary-300": log.startsWith("Match"),
-                          "text-primary-400": log.startsWith("Expand"),
+                          "text-green-300 font-bold": log.startsWith("[Accept]"),
+                          "text-red-300": log.startsWith("[Error]"),
+                          "text-primary-300": log.startsWith("[Match]"),
+                          "text-primary-400": log.startsWith("[Expand]"),
                         }}
                       >
                         <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">

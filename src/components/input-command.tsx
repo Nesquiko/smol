@@ -12,7 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/ui/command";
-import { EXAMPLES, InputExample } from "~/lib/data/examples";
+import { FILE_EXAMPLES, InputExample } from "~/lib/data/file-examples";
 
 interface InputCommandProps {
   fileContent: Accessor<string | undefined>;
@@ -67,7 +67,7 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
         <CommandList>
           <CommandEmpty>No examples found.</CommandEmpty>
           <CommandGroup heading="Examples">
-            <For each={EXAMPLES}>
+            <For each={FILE_EXAMPLES}>
               {(example: InputExample) => (
                 <CommandItem
                   onSelect={() => handleSelect(example)}

@@ -1,5 +1,9 @@
 import type { LucideIcon } from "lucide-solid";
 
+export type Program = "program";
+export type Dollar = "$";
+export type Epsilon = "ε";
+
 export type Token = {
   type: TokenType;
   value: string;
@@ -33,10 +37,12 @@ export type Punctuation = "SEMI" | "LPAREN" | "RPAREN" | "COMMA";
 
 export type Screen = "input" | "lex-config" | "lex" | "syntax-config" | "syntax" | "results";
 
+export type ParseTreeNodeData = Token | NonTerminal | TokenType | Dollar;
+
 export type ParseTreeNode = {
   id: string;
-  data: Token | NonTerminal | TokenType | Dollar;
-  visited: boolean;
+  data: ParseTreeNodeData;
+  processed: boolean;
   children?: Array<ParseTreeNode>;
 };
 
@@ -70,32 +76,28 @@ export type NonTerminal =
   | "bterm"
   | "bterm'"
   | "bfactor"
-  | "ε";
-
-export type Dollar = "$";
+  | Epsilon;
 
 export type BufferType = Array<Token>;
 export type StackItem = Token | NonTerminal | Dollar;
 export type StackType = Array<StackItem>;
 
-export type LL1Table = Record<NonTerminal, Partial<Record<TokenType | Dollar, number>>>;
+export type SyntaxParserActionType = "init" | "expand" | "match" | "accept" | "error";
 
-export type ParserActionKind = "init" | "expand" | "match" | "accept" | "error";
-
-export interface ParserAction {
-  kind: ParserActionKind;
+export interface SyntaxParserAction {
+  type: SyntaxParserActionType;
   ruleNumber?: number;
   symbol?: string;
   tokenValue?: string;
   errorMessage?: string;
 }
 
-export interface ParserStep {
+export interface SyntaxParserStep {
   stack: Array<string>;
   bufferIndex: number;
   tree: ParseTreeNode;
   log: string;
-  action: ParserAction;
+  action: SyntaxParserAction;
   currentTokenIndex: number;
   currentNodeId: string | undefined;
 }
@@ -119,3 +121,14 @@ export type ErrorModeData = {
   description: string;
   icon: LucideIcon;
 };
+
+export type RuleNumber = number;
+
+export type ParseTable = Record<string, Record<string, RuleNumber>>;
+
+export type Rule = {
+  left: string;
+  right: Array<NonTerminal | TokenType | Dollar>;
+};
+
+export type Rules = Record<RuleNumber, Rule>;

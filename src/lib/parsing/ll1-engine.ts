@@ -1,9 +1,9 @@
-import { NON_TERMINALS, PARSE_TABLE, RULES } from "~/lib/parsing/transition-table";
+/*import { NON_TERMINALS, PARSE_TABLE, RULES } from "~/lib/parsing/transition-table";
 import {
   Dollar,
   NonTerminal,
-  ParserAction,
-  ParserStep,
+  SyntaxParserAction,
+  SyntaxParserStep,
   ParseTreeNode,
   Result,
   Token,
@@ -14,12 +14,12 @@ let _nodeId: number = 0;
 
 const mkNode = (
   data: Token | NonTerminal | TokenType | Dollar,
-  visited: boolean = false,
+  processed: boolean = false,
   children: Array<ParseTreeNode> = [],
 ): ParseTreeNode => ({
   id: String(_nodeId++),
   data,
-  visited,
+  processed: processed,
   children,
 });
 
@@ -27,7 +27,7 @@ const cloneTree = (node: ParseTreeNode): ParseTreeNode => {
   return {
     id: node.id,
     data: typeof node.data === "object" ? { ...node.data } : node.data,
-    visited: node.visited,
+    processed: node.processed,
     children: node.children?.map(cloneTree),
   };
 };
@@ -35,9 +35,9 @@ const cloneTree = (node: ParseTreeNode): ParseTreeNode => {
 export function buildParserSteps(
   tokens: Array<Token>,
   onResult: (result: Result) => void,
-): Array<ParserStep> {
+): Array<SyntaxParserStep> {
   _nodeId = 0;
-  const steps: ParserStep[] = [];
+  const steps: SyntaxParserStep[] = [];
 
   const EOF_TOKEN: Token = {
     type: "$",
@@ -56,7 +56,7 @@ export function buildParserSteps(
 
   const nodeStack: ParseTreeNode[] = [mkNode("$"), root];
 
-  const snap = (log: string, action: ParserAction, currentNode?: ParseTreeNode): ParserStep => ({
+  const snap = (log: string, action: SyntaxParserAction, currentNode?: ParseTreeNode): SyntaxParserStep => ({
     stack: [...symStack],
     bufferIndex,
     tree: cloneTree(root),
@@ -66,7 +66,7 @@ export function buildParserSteps(
     currentNodeId: currentNode?.id,
   });
 
-  steps.push(snap("Parser initialized. Starting symbol: program", { kind: "init" }));
+  steps.push(snap("Parser initialized. Starting symbol: program", { type: "init" }));
 
   let safetyLimit = 5000;
 
@@ -76,14 +76,14 @@ export function buildParserSteps(
 
     if (top === "$") {
       if (lookahead.type === "$") {
-        steps.push(snap("Accept - input fully consumed.", { kind: "accept" }));
+        steps.push(snap("Accept - input fully consumed.", { type: "accept" }));
 
         onResult("correct");
       } else {
         steps.push(
           snap(
             `Error - expected end of input, got '${lookahead.type}'.`,
-            { kind: "error", errorMessage: "Unexpected token at end" },
+            { type: "error", errorMessage: "Unexpected token at end" },
             nodeStack[nodeStack.length - 1],
           ),
         );
@@ -98,12 +98,12 @@ export function buildParserSteps(
         symStack.pop();
         const matchedNode = nodeStack.pop()!;
         matchedNode.data = lookahead;
-        matchedNode.visited = true;
+        matchedNode.processed = true;
         bufferIndex++;
         steps.push(
           snap(
             `Match  ${top} = "${lookahead.value}"  (line ${lookahead.line}, col ${lookahead.colStart})`,
-            { kind: "match", symbol: top, tokenValue: lookahead.value },
+            { type: "match", symbol: top, tokenValue: lookahead.value },
             matchedNode,
           ),
         );
@@ -111,7 +111,7 @@ export function buildParserSteps(
         steps.push(
           snap(
             `Error - expected '${top}', got '${lookahead.type}' ("${lookahead.value}") at line ${lookahead.line}:${lookahead.colStart}.`,
-            { kind: "error", errorMessage: `Expected ${top}` },
+            { type: "error", errorMessage: `Expected ${top}` },
             nodeStack[nodeStack.length - 1],
           ),
         );
@@ -126,7 +126,7 @@ export function buildParserSteps(
         steps.push(
           snap(
             `Error - no rule for (${top}, ${lookahead.type}) at line ${lookahead.line}:${lookahead.colStart}.`,
-            { kind: "error", errorMessage: `No rule for (${top}, ${lookahead.type})` },
+            { type: "error", errorMessage: `No rule for (${top}, ${lookahead.type})` },
             nodeStack[nodeStack.length - 1],
           ),
         );
@@ -139,32 +139,32 @@ export function buildParserSteps(
       symStack.pop();
       const parentNode = nodeStack.pop()!;
 
-      if (rule.rhs.length === 0) {
+      if (rule.right.length === 0) {
         const epsNode: ParseTreeNode = mkNode("ε", true);
         parentNode.children = [epsNode];
-        parentNode.visited = true;
+        parentNode.processed = true;
 
         steps.push(
           snap(
             `Expand  ${top} → ε  (rule ${ruleNum}, lookahead: ${lookahead.type})`,
-            { kind: "expand", ruleNumber: ruleNum, symbol: top },
+            { type: "expand", ruleNumber: ruleNum, symbol: top },
             parentNode,
           ),
         );
       } else {
-        const childNodes = rule.rhs.map((sym) => mkNode(sym));
+        const childNodes = rule.right.map((sym) => mkNode(sym));
         parentNode.children = childNodes;
-        parentNode.visited = true;
+        parentNode.processed = true;
 
-        for (let i: number = rule.rhs.length - 1; i >= 0; i--) {
-          symStack.push(rule.rhs[i]);
+        for (let i: number = rule.right.length - 1; i >= 0; i--) {
+          symStack.push(rule.right[i]);
           nodeStack.push(childNodes[i]);
         }
 
         steps.push(
           snap(
-            `Expand  ${top} → ${rule.rhs.join(" ")}  (rule ${ruleNum}, lookahead: ${lookahead.type})`,
-            { kind: "expand", ruleNumber: ruleNum, symbol: top },
+            `Expand  ${top} → ${rule.right.join(" ")}  (rule ${ruleNum}, lookahead: ${lookahead.type})`,
+            { type: "expand", ruleNumber: ruleNum, symbol: top },
             parentNode,
           ),
         );
@@ -176,7 +176,7 @@ export function buildParserSteps(
     steps.push(
       snap(
         "Error - exceeded step limit. Possible infinite loop in grammar.",
-        { kind: "error", errorMessage: "Step limit exceeded" },
+        { type: "error", errorMessage: "Step limit exceeded" },
         nodeStack[nodeStack.length - 1],
       ),
     );
@@ -186,3 +186,4 @@ export function buildParserSteps(
 
   return steps;
 }
+*/

@@ -7,7 +7,7 @@ import { BarList } from "~/components/ui/bar-list";
 import { Button } from "~/components/ui/button";
 import { DonutChart } from "~/components/ui/charts";
 import { computeLexStats, computeSyntaxStats, LexStats, SyntaxStats } from "~/lib/parsing/stats";
-import { ParserStep, Result, Token } from "~/lib/types";
+import { SyntaxParserStep, Result, Token } from "~/lib/types";
 
 interface StatCardProps {
   label: string;
@@ -30,7 +30,7 @@ const StatCard: Component<StatCardProps> = (props) => (
 interface ResultsScreenProps {
   result: Accessor<Result>;
   tokens: Accessor<Array<Token>>;
-  steps: Accessor<Array<ParserStep>>;
+  steps: Accessor<Array<SyntaxParserStep>>;
   onBack: () => void;
 }
 
@@ -42,7 +42,6 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
     { label: "Total tokens", value: lexStats().totalTokens },
     { label: "Lines of code", value: lexStats().lines },
     { label: "Unique token types", value: lexStats().uniqueTokenTypes },
-    //{ label: "Most frequent type", value: lexStats().mostFrequentType },
   ]);
 
   const synStatItems = createMemo(() => [
@@ -126,7 +125,16 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
   return (
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center gap-6 px-6 py-12">
       <div class="flex flex-col items-center gap-2">
-        <span class="text-6xl font-bold text-primary-300 uppercase">{props.result()}</span>
+        <span
+          class="text-6xl font-bold text-primary-300 uppercase"
+          classList={{
+            "text-primary-300": props.result() === "unknown",
+            "text-green-300": props.result() === "correct",
+            "text-red-300": props.result() === "incorrect",
+          }}
+        >
+          {props.result()}
+        </span>
         <span class="text-xs text-muted-foreground">{resultDescription()}</span>
       </div>
 
