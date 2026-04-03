@@ -29,7 +29,7 @@ export const RULES: Record<RuleNumber, { lhs: string; rhs: Array<NonTerminal | T
     1: { lhs: "program", rhs: ["BEGIN", "statement_list", "END"] },
     2: { lhs: "statement_list", rhs: ["statement", "statement_list'"] },
     3: { lhs: "statement_list'", rhs: [] },
-    4: { lhs: "statement_list'", rhs: ["statement", "statement_list'"] },
+    4: { lhs: "statement_list'", rhs: ["statement_list"] },
     5: { lhs: "statement", rhs: ["IDENT", "ASSIGN", "expression", "SEMI"] },
     6: { lhs: "statement", rhs: ["READ", "LPAREN", "id_list", "RPAREN", "SEMI"] },
     7: { lhs: "statement", rhs: ["WRITE", "LPAREN", "expr_list", "RPAREN", "SEMI"] },
