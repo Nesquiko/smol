@@ -17,7 +17,7 @@ const EOF = "EOF";
 export interface Lexer {
   /* Advances the state according to the args.char and if in accepting state, then emits a token **/
   process(args: LexerArgs): LexError | undefined;
-  /* Makes one final step in order to finalize potential token, if the if the final state is accepting, then emits a token  **/
+  /* Makes one final step in order to finalize potential token, if the final state is accepting, then emits a token  **/
   eof(args: Omit<LexerArgs, "char">): LexError | undefined;
 }
 

@@ -1,6 +1,8 @@
+import GitBranchIcon from "lucide-solid/icons/git-branch";
 import MouseIcon from "lucide-solid/icons/mouse";
 import MoveIcon from "lucide-solid/icons/move";
-import { Accessor, Component, createEffect, createSignal, For } from "solid-js";
+import TerminalIcon from "lucide-solid/icons/terminal";
+import { Accessor, Component, createEffect, createSignal, For, Show } from "solid-js";
 
 import { ParseTree } from "~/components/parse-tree";
 import { Stack } from "~/components/stack";
@@ -8,8 +10,13 @@ import { SyntaxControls } from "~/components/syntax-controls";
 import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { TREE_TEST_SMALL } from "~/lib/data/test-data";
 import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
+
+const INITIAL_TREE: ParseTreeNode = {
+  id: "-1",
+  data: "program",
+  visited: false,
+} satisfies ParseTreeNode;
 
 type SyntaxTab = "tree" | "logs";
 
@@ -24,7 +31,7 @@ let flyId: number = 0;
 
 export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [buffer, setBuffer] = createSignal<BufferType>([]);
-  const [tree, setTree] = createSignal<ParseTreeNode>(TREE_TEST_SMALL);
+  const [tree, setTree] = createSignal<ParseTreeNode>(INITIAL_TREE);
   const [stack, setStack] = createSignal<StackType>(["$"]);
   const [flyingTokens, setFlyingTokens] = createSignal<Array<FlyingToken>>([]);
   const [logs, setLogs] = createSignal<string[]>([]);
@@ -36,6 +43,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   let logsContainerRef: HTMLDivElement | undefined;
 
   createEffect(() => {
+    logs();
     if (logsContainerRef) {
       logsContainerRef.scrollTop = logsContainerRef.scrollHeight;
     }
@@ -45,7 +53,6 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
     if (!stackCardRef) return;
 
     const stackRect: DOMRect = stackCardRef.getBoundingClientRect();
-
     const itemHeight: number = 20;
     const toRect: DOMRect = new DOMRect(
       stackRect.left + 2,
@@ -75,24 +82,36 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
       <div class="flex min-h-0 w-full max-w-5xl flex-1 flex-row items-stretch justify-center gap-6 p-6 pb-0">
         <Card class="relative flex h-full w-full flex-1 items-center justify-center p-0">
-          <Tabs value={activeTab()} onChange={setActiveTab} class="flex h-full w-full flex-col">
-            <TabsList class="w-full rounded-t-lg rounded-b-none border-b bg-primary-900">
+          <Tabs
+            value={activeTab()}
+            onChange={setActiveTab}
+            orientation="vertical"
+            class="flex h-full w-full flex-row"
+          >
+            <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
               <TabsTrigger
                 value="tree"
-                class="w-1/2 cursor-pointer data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
+                <GitBranchIcon class="inline-block size-4 rotate-90" />
                 Parse tree
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                class="w-1/2 cursor-pointer data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg rounded-none data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
+                <TerminalIcon class="inline-block size-4 rotate-90" />
                 Logs
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="tree" class="mt-0 flex-1 rounded-b-lg bg-primary-900">
-              <CardContent class="relative flex h-full w-full items-center justify-center overflow-hidden rounded-b-lg p-0">
+            <TabsContent
+              value="tree"
+              class="mt-0 flex-1 overflow-hidden rounded-r-lg bg-primary-900"
+            >
+              <CardContent class="relative flex h-full w-full items-center justify-center overflow-hidden rounded-r-lg p-0">
                 <ParseTree
                   tree={tree}
                   active={() => activeTab() === "tree"}
@@ -115,30 +134,40 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
             <TabsContent
               value="logs"
-              class="mt-0 flex-1 overflow-hidden rounded-b-lg bg-primary-900"
+              class="mt-0 flex-1 overflow-hidden rounded-r-lg bg-primary-900"
             >
               <CardContent
                 ref={logsContainerRef}
-                class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-b-lg p-4"
+                class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-r-lg p-4"
               >
-                <For each={logs()}>
-                  {(log: string, index) => (
-                    <p
-                      class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
-                      classList={{
-                        "text-white font-bold": log.startsWith("Accept"),
-                        "text-red-400": log.startsWith("Error"),
-                        "text-primary-300": log.startsWith("Match"),
-                        "text-primary-400": log.startsWith("Expand"),
-                      }}
-                    >
-                      <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">
-                        {String(index() + 1).padStart(padWidth(), " ")}
-                      </span>
-                      {log}
-                    </p>
-                  )}
-                </For>
+                <Show
+                  when={logs().length !== 0}
+                  fallback={
+                    <div class="flex h-full w-full flex-1 flex-col items-center justify-center">
+                      <TerminalIcon class="size-24 text-primary-700" />
+                      <span class="text-sm font-medium text-primary-600">No logs yet</span>
+                    </div>
+                  }
+                >
+                  <For each={logs()}>
+                    {(log: string, index: Accessor<number>) => (
+                      <p
+                        class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
+                        classList={{
+                          "text-white font-bold": log.startsWith("Accept"),
+                          "text-red-400": log.startsWith("Error"),
+                          "text-primary-300": log.startsWith("Match"),
+                          "text-primary-400": log.startsWith("Expand"),
+                        }}
+                      >
+                        <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">
+                          {String(index() + 1).padStart(padWidth(), " ")}
+                        </span>
+                        {log}
+                      </p>
+                    )}
+                  </For>
+                </Show>
               </CardContent>
             </TabsContent>
           </Tabs>

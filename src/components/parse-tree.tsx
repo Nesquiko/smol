@@ -342,7 +342,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | undefined;
 
   const resetView = () => {
-    if (!svgRef || !zoomBehavior || !props.tree) return;
+    if (!svgRef || !zoomBehavior || !props.tree()) return;
 
     const svg = d3.select(svgRef);
     const width = svgRef.clientWidth;
