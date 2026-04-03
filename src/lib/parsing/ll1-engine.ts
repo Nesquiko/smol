@@ -4,7 +4,8 @@ import {
   NonTerminal,
   ParserAction,
   ParserStep,
-  ParseTreeNode, Result,
+  ParseTreeNode,
+  Result,
   Token,
   TokenType,
 } from "~/lib/types";
@@ -50,10 +51,7 @@ export function buildParserSteps(
 
   const root = mkNode("program");
 
-  const nodeStack: ParseTreeNode[] = [
-    mkNode("$"),
-    root,
-  ];
+  const nodeStack: ParseTreeNode[] = [mkNode("$"), root];
 
   const snap = (log: string, action: ParserAction): ParserStep => ({
     stack: [...symStack],

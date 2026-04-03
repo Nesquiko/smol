@@ -1,4 +1,4 @@
-import {ParserStep, Token} from "~/lib/types";
+import { ParserStep, Token } from "~/lib/types";
 
 export type LexStats = {
   totalTokens: number;
@@ -19,9 +19,7 @@ export type SyntaxStats = {
   stepBreakdown: Array<{ name: string; value: number; fill: string }>;
 };
 
-export const computeLexStats = (
-  tokens: Array<Token>,
-): LexStats => {
+export const computeLexStats = (tokens: Array<Token>): LexStats => {
   const freq: Record<string, number> = {};
   let maxLine = 0;
 
@@ -32,9 +30,7 @@ export const computeLexStats = (
 
   const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
   const mostFrequentType = sorted[0]?.[0] ?? "—";
-  const tokenTypeFrequency = sorted
-    .slice(0, 5)
-    .map(([name, value]) => ({ name, value }));
+  const tokenTypeFrequency = sorted.slice(0, 5).map(([name, value]) => ({ name, value }));
 
   return {
     totalTokens: tokens.length,
@@ -45,9 +41,7 @@ export const computeLexStats = (
   };
 };
 
-export const computeSyntaxStats = (
-  steps: Array<ParserStep>,
-): SyntaxStats => {
+export const computeSyntaxStats = (steps: Array<ParserStep>): SyntaxStats => {
   const rulesApplied = new Set<number>();
   let expansions = 0;
   let matches = 0;
@@ -60,8 +54,7 @@ export const computeSyntaxStats = (
     switch (step.action.kind) {
       case "expand":
         expansions++;
-        if (step.action.ruleNumber !== undefined)
-          rulesApplied.add(step.action.ruleNumber);
+        if (step.action.ruleNumber !== undefined) rulesApplied.add(step.action.ruleNumber);
         break;
       case "match":
         matches++;
@@ -95,11 +88,14 @@ export const computeSyntaxStats = (
         fill: "#d4d4d4",
       },
       ...(errors > 0
-        ? [{
-          name: "Errors",
-          value: errors,
-          fill: "#fca5a5",
-        }] : []),
+        ? [
+            {
+              name: "Errors",
+              value: errors,
+              fill: "#fca5a5",
+            },
+          ]
+        : []),
     ],
   };
 };

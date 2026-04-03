@@ -1,54 +1,57 @@
-import type { ComponentProps, JSX } from "solid-js"
-import { For, mergeProps, Show, splitProps } from "solid-js"
-import { Dynamic } from "solid-js/web"
+import type { ComponentProps, JSX } from "solid-js";
 
-import { cn } from "~/lib/ui-utils"
+import { For, mergeProps, Show, splitProps } from "solid-js";
+import { Dynamic } from "solid-js/web";
+
+import { cn } from "~/lib/ui-utils";
 
 type Bar<T> = T & {
-  value: number
-  name: JSX.Element
-  icon?: (props: ComponentProps<"svg">) => JSX.Element
-  href?: string
-  target?: string
-}
+  value: number;
+  name: JSX.Element;
+  icon?: (props: ComponentProps<"svg">) => JSX.Element;
+  href?: string;
+  target?: string;
+};
 
-type SortOrder = "ascending" | "descending" | "none"
+type SortOrder = "ascending" | "descending" | "none";
 
-type ValueFormatter = (value: number) => string
+type ValueFormatter = (value: number) => string;
 
-const defaultValueFormatter: ValueFormatter = (value: number) => value.toString()
+const defaultValueFormatter: ValueFormatter = (value: number) => value.toString();
 
 type BarListProps<T> = ComponentProps<"div"> & {
-  data: Bar<T>[]
-  valueFormatter?: ValueFormatter
-  sortOrder?: SortOrder
-}
+  data: Bar<T>[];
+  valueFormatter?: ValueFormatter;
+  sortOrder?: SortOrder;
+};
 
 const BarList = <T,>(rawProps: BarListProps<T>) => {
   const props = mergeProps(
     {
       valueFormatter: defaultValueFormatter,
-      sortOrder: "descending" as SortOrder
+      sortOrder: "descending" as SortOrder,
     },
-    rawProps
-  )
-  const [local, others] = splitProps(props, ["class", "data", "valueFormatter", "sortOrder"])
+    rawProps,
+  );
+  const [local, others] = splitProps(props, ["class", "data", "valueFormatter", "sortOrder"]);
 
   const sortedData = () => {
     if (local.sortOrder === "none") {
-      return local.data
+      return local.data;
     }
-    return local.data.sort((a, b) =>
-      local.sortOrder === "ascending" ? a.value - b.value : b.value - a.value
-    )
-  }
+    const order = local.sortOrder;
+
+    return [...local.data].sort((a, b) =>
+      order === "ascending" ? a.value - b.value : b.value - a.value,
+    );
+  };
 
   const widths = () => {
-    const maxValue = Math.max(...sortedData().map((item) => item.value), 0)
+    const maxValue = Math.max(...sortedData().map((item) => item.value), 0);
     return sortedData().map((item) =>
-      item.value === 0 ? 0 : Math.max((item.value / maxValue) * 100, 2)
-    )
-  }
+      item.value === 0 ? 0 : Math.max((item.value / maxValue) * 100, 2),
+    );
+  };
 
   return (
     <div
@@ -62,9 +65,9 @@ const BarList = <T,>(rawProps: BarListProps<T>) => {
             <div class="row flex w-full justify-between space-x-6">
               <div class="grow">
                 <div
-                  class={cn("flex h-9.5 items-center rounded-md px-3 bg-primary-800")}
+                  class={cn("flex h-9.5 items-center rounded-md bg-primary-800 px-3")}
                   style={{
-                    width: `${widths()[idx()]}%`
+                    width: `${widths()[idx()]}%`,
                   }}
                 >
                   <Show when={bar.icon}>
@@ -86,11 +89,11 @@ const BarList = <T,>(rawProps: BarListProps<T>) => {
               </div>
               <div class="flex items-center pr-1">{local.valueFormatter(bar.value)}</div>
             </div>
-          )
+          );
         }}
       </For>
     </div>
-  )
-}
+  );
+};
 
-export { BarList }
+export { BarList };

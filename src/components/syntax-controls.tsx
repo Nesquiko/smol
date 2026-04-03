@@ -1,6 +1,6 @@
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
-import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
@@ -20,7 +20,7 @@ import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import {BufferType, ParserStep, ParseTreeNode, StackType, Token} from "~/lib/types";
+import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 interface SyntaxControlsProps {
@@ -55,7 +55,8 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     );
     props.setTree(step.tree);
     props.setLogs(
-      props.steps()
+      props
+        .steps()
         .slice(0, stepIndex() + 1)
         .map((s) => s.log),
     );
@@ -200,7 +201,9 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
       <div class="-mt-4 flex flex-row items-center justify-center gap-2 text-xs text-muted-foreground">
         <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{stepIndex() + 1}</span>
         <span class="select-none">/</span>
-        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{props.steps().length}</span>
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">
+          {props.steps().length}
+        </span>
       </div>
 
       <div class="grid w-full grid-cols-3 gap-3 pb-6">
@@ -299,27 +302,30 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
 
         <div class="flex w-full items-center justify-end">
           <Show when={props.withNavigation}>
-            <Show when={hasSeenLastStep()} fallback={(
-              <Tooltip placement="top" openDelay={0} closeDelay={0}>
-                <TooltipTrigger
-                  as={Button}
-                  variant="ghost"
-                  size="default"
-                  class="w-fit text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60"
-                  classList={{
-                    "cursor-pointer": hasSeenLastStep(),
-                    "cursor-not-allowed": !hasSeenLastStep(),
-                  }}
-                >
-                  Results
-                  <ChevronRightIcon />
-                </TooltipTrigger>
+            <Show
+              when={hasSeenLastStep()}
+              fallback={
+                <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                  <TooltipTrigger
+                    as={Button}
+                    variant="ghost"
+                    size="default"
+                    class="w-fit text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60"
+                    classList={{
+                      "cursor-pointer": hasSeenLastStep(),
+                      "cursor-not-allowed": !hasSeenLastStep(),
+                    }}
+                  >
+                    Results
+                    <ChevronRightIcon />
+                  </TooltipTrigger>
 
-                <TooltipContent>
-                  Check out the last step before seeing the results!
-                </TooltipContent>
-              </Tooltip>
-            )}>
+                  <TooltipContent>
+                    Check out the last step before seeing the results!
+                  </TooltipContent>
+                </Tooltip>
+              }
+            >
               <Button
                 variant="ghost"
                 size="default"

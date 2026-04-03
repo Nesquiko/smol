@@ -1,12 +1,12 @@
-import {Accessor, createMemo, createSignal, Match, Switch} from "solid-js";
+import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
 import { TOKENS_TEST } from "~/lib/data/test-data";
-import {Page, ParserStep, Result, Token} from "~/lib/types";
+import { buildParserSteps } from "~/lib/parsing/ll1-engine";
+import { Page, ParserStep, Result, Token } from "~/lib/types";
 import { InputScreen } from "~/screens/input-screen";
 import { LexScreen } from "~/screens/lex-screen";
 import { ResultsScreen } from "~/screens/results-screen";
 import { SyntaxScreen } from "~/screens/syntax-screen";
-import {buildParserSteps} from "~/lib/parsing/ll1-engine";
 
 export const Home = () => {
   const [currentPage, setCurrentPage] = createSignal<Page>("input");
@@ -25,10 +25,7 @@ export const Home = () => {
   };
 
   const syntaxParserSteps: Accessor<Array<ParserStep>> = createMemo(
-    (): Array<ParserStep> => buildParserSteps(
-      tokens(),
-      onResult,
-    ),
+    (): Array<ParserStep> => buildParserSteps(tokens(), onResult),
   );
 
   return (

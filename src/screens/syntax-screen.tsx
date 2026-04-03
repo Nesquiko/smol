@@ -9,7 +9,7 @@ import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
-import {BufferType, ParserStep, ParseTreeNode, StackType, Token} from "~/lib/types";
+import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;
@@ -122,7 +122,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                         "text-primary-400": log.startsWith("Expand"),
                       }}
                     >
-                      <span class="mr-4 ml-2 font-mono text-primary-500 select-none text-sm">
+                      <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">
                         {String(index() + 1).padStart(padWidth(), " ")}
                       </span>
                       {log}
@@ -134,10 +134,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
           </Tabs>
         </Card>
 
-        <Stack
-          stack={stack}
-          cardRef={(el) => (stackCardRef = el)}
-        />
+        <Stack stack={stack} cardRef={(el) => (stackCardRef = el)} />
       </div>
 
       <SyntaxControls

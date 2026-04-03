@@ -1,17 +1,13 @@
+import type { Chart, ChartData, ChartOptions } from "chart.js";
+
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import { Accessor, Component, createMemo, For } from "solid-js";
 
 import { BarList } from "~/components/ui/bar-list";
-import { DonutChart } from "~/components/ui/charts";
 import { Button } from "~/components/ui/button";
-import {
-  computeLexStats,
-  computeSyntaxStats,
-  LexStats,
-  SyntaxStats,
-} from "~/lib/parsing/stats";
+import { DonutChart } from "~/components/ui/charts";
+import { computeLexStats, computeSyntaxStats, LexStats, SyntaxStats } from "~/lib/parsing/stats";
 import { ParserStep, Result, Token } from "~/lib/types";
-import type {Chart, ChartData, ChartOptions} from "chart.js";
 
 interface StatCardProps {
   label: string;
@@ -21,7 +17,7 @@ interface StatCardProps {
 
 const StatCard: Component<StatCardProps> = (props) => (
   <div class="flex flex-col items-start justify-between gap-1 rounded-lg bg-primary-900 p-4">
-    <span class="text-xs text-muted-foreground/60 font-medium">{props.label}</span>
+    <span class="text-xs font-medium text-muted-foreground/60">{props.label}</span>
     <span
       class="font-mono text-2xl font-bold"
       classList={{ "text-primary-300": !props.dim, "text-muted-foreground": props.dim }}
@@ -118,21 +114,20 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
 
   const resultDescription = (): string => {
     switch (props.result()) {
-      case "correct": return "The input has been successfully parsed.";
-      case "incorrect": return "The parser encountered errors in the input.";
-      case "unknown": return "Could not determine the correctness of the input.";
+      case "correct":
+        return "The input has been successfully parsed.";
+      case "incorrect":
+        return "The parser encountered errors in the input.";
+      case "unknown":
+        return "Could not determine the correctness of the input.";
     }
   };
 
   return (
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center gap-6 px-6 py-12">
       <div class="flex flex-col items-center gap-2">
-        <span class="text-6xl font-bold text-primary-300 uppercase">
-          {props.result()}
-        </span>
-        <span class="text-xs text-muted-foreground">
-          {resultDescription()}
-        </span>
+        <span class="text-6xl font-bold text-primary-300 uppercase">{props.result()}</span>
+        <span class="text-xs text-muted-foreground">{resultDescription()}</span>
       </div>
 
       <div class="flex w-full max-w-3xl flex-col gap-10 pb-9">
@@ -140,16 +135,16 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
           <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
             Lexical analysis
           </h2>
-          <div class="flex flex-col sm:flex-row items-start justify-center w-full gap-3">
-            <div class="grid grid-cols-3 sm:grid-cols-1 gap-3 w-full">
-              <For each={lexStatItems()}>
-                {(s) => <StatCard label={s.label} value={s.value}/>}
-              </For>
+          <div class="flex w-full flex-col items-start justify-center gap-3 sm:flex-row">
+            <div class="grid w-full grid-cols-3 gap-3 sm:grid-cols-1">
+              <For each={lexStatItems()}>{(s) => <StatCard label={s.label} value={s.value} />}</For>
             </div>
 
-            <div class="rounded-lg bg-primary-900 p-[17px] w-full h-full">
-              <p class="mb-3 text-xs text-muted-foreground/60 font-medium">Most frequent token types</p>
-              <BarList data={lexStats().tokenTypeFrequency} class="text-xs"/>
+            <div class="h-full w-full rounded-lg bg-primary-900 p-[17px]">
+              <p class="mb-3 text-xs font-medium text-muted-foreground/60">
+                Most frequent token types
+              </p>
+              <BarList data={lexStats().tokenTypeFrequency} class="text-xs" />
             </div>
           </div>
         </div>
@@ -158,19 +153,15 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
           <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
             Syntax Analysis
           </h2>
-          <div class="flex flex-col md:flex-row items-center justify-center w-full gap-3">
-            <div class="grid grid-cols-2 gap-3 w-full">
+          <div class="flex w-full flex-col items-center justify-center gap-3 md:flex-row">
+            <div class="grid w-full grid-cols-2 gap-3">
               <For each={synStatItems()}>
-                {(s) => <StatCard label={s.label} value={s.value} dim={s.dim}/>}
+                {(s) => <StatCard label={s.label} value={s.value} dim={s.dim} />}
               </For>
             </div>
 
-            <div class="rounded-lg bg-primary-900 p-4 flex items-center justify-center w-full max-h-70 md:max-w-70">
-              <DonutChart
-                data={donutData()}
-                options={donutOptions}
-                plugins={[donutCenterPlugin]}
-              />
+            <div class="flex max-h-70 w-full items-center justify-center rounded-lg bg-primary-900 p-4 md:max-w-70">
+              <DonutChart data={donutData()} options={donutOptions} plugins={[donutCenterPlugin]} />
             </div>
           </div>
         </div>
@@ -182,7 +173,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
         class="absolute bottom-6 left-6 w-fit cursor-pointer"
         onClick={props.onBack}
       >
-        <ChevronLeftIcon/>
+        <ChevronLeftIcon />
         Syntax analysis
       </Button>
     </div>

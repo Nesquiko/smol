@@ -3,7 +3,9 @@ import { createEffect, createSignal, onCleanup, Setter } from "solid-js";
 import {
   AUTO_MODE_SPEED_MS,
   BLINK_DURATION,
-  KEYS_BACKWARD, KEYS_FAST_BACKWARD, KEYS_FAST_FORWARD,
+  KEYS_BACKWARD,
+  KEYS_FAST_BACKWARD,
+  KEYS_FAST_FORWARD,
   KEYS_FORWARD,
   KEYS_NEXT,
   KEYS_PREVIOUS,

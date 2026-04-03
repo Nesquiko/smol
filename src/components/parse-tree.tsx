@@ -4,7 +4,15 @@ import { Accessor, Component, createEffect } from "solid-js";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import {Dollar, Margins, NodeType, NonTerminal, ParseTreeNode, Token, TokenType} from "~/lib/types";
+import {
+  Dollar,
+  Margins,
+  NodeType,
+  NonTerminal,
+  ParseTreeNode,
+  Token,
+  TokenType,
+} from "~/lib/types";
 import { cn, downloadSvg } from "~/lib/ui-utils";
 
 const RADIUS: number = 16;
@@ -28,9 +36,7 @@ const NODE_COLORS: Record<NodeType, string> = {
   unknown: "var(--color-neutral-600)",
 };
 
-const getNodeType = (
-  data: Token | NonTerminal | Dollar | string,
-): NodeType => {
+const getNodeType = (data: Token | NonTerminal | Dollar | string): NodeType => {
   if (!data) return "unknown";
   if (typeof data === "string") {
     if (data === "$") return "eof";
@@ -41,35 +47,19 @@ const getNodeType = (
   return "unknown";
 };
 
-const getNodeLabel = (
-  d: d3.HierarchyPointNode<ParseTreeNode>,
-): string => {
+const getNodeLabel = (d: d3.HierarchyPointNode<ParseTreeNode>): string => {
   const data = d.data.data;
   if (!data) return "";
-  const text: string = typeof data === "string"
-    ? data
-    : "value" in data
-      ? data.value
-      : "";
+  const text: string = typeof data === "string" ? data : "value" in data ? data.value : "";
   if (d.depth === 0) return text;
-  return text.length > MAX_LABEL_LENGTH
-    ? `${text.slice(0, MAX_LABEL_LENGTH)}...`
-    : text;
+  return text.length > MAX_LABEL_LENGTH ? `${text.slice(0, MAX_LABEL_LENGTH)}...` : text;
 };
 
-const getNodeRadius = (
-  d: d3.HierarchyPointNode<ParseTreeNode>,
-): number => d.depth === 0 ? ROOT_RADIUS : RADIUS;
+const getNodeRadius = (d: d3.HierarchyPointNode<ParseTreeNode>): number =>
+  d.depth === 0 ? ROOT_RADIUS : RADIUS;
 
-const getOrCreateTooltip = (): d3.Selection<
-  HTMLDivElement,
-  unknown,
-  HTMLElement,
-  unknown
-> => {
-  const existing = d3
-    .select("body")
-    .select<HTMLDivElement>(`.${TOOLTIP_CLASS}`);
+const getOrCreateTooltip = (): d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> => {
+  const existing = d3.select("body").select<HTMLDivElement>(`.${TOOLTIP_CLASS}`);
   if (!existing.empty()) return existing;
 
   return d3
@@ -88,12 +78,7 @@ const getOrCreateTooltip = (): d3.Selection<
 };
 
 const applyTooltip = (
-  selection: d3.Selection<
-    SVGGElement,
-    d3.HierarchyPointNode<ParseTreeNode>,
-    SVGGElement,
-    unknown
-  >,
+  selection: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown>,
   tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
 ) => {
   selection
@@ -104,9 +89,7 @@ const applyTooltip = (
       if (typeof nodeData === "string") {
         tooltip
           .style("opacity", 1)
-          .html(
-            `<div><strong>${nodeData}</strong></div><div>Non-terminal</div>`,
-          );
+          .html(`<div><strong>${nodeData}</strong></div><div>Non-terminal</div>`);
       } else if ("value" in nodeData) {
         tooltip.style("opacity", 1).html(`
           <div><strong>${nodeData.type}</strong></div>
@@ -117,9 +100,7 @@ const applyTooltip = (
       }
     })
     .on("mousemove", (event) =>
-      tooltip
-        .style("left", `${event.clientX + 10}px`)
-        .style("top", `${event.clientY + 10}px`),
+      tooltip.style("left", `${event.clientX + 10}px`).style("top", `${event.clientY + 10}px`),
     )
     .on("mouseleave", () => tooltip.style("opacity", 0));
 };
@@ -130,25 +111,20 @@ type LayoutOutput = {
   dy: number;
 };
 
-const buildLayout = (
-  tree: ParseTreeNode,
-  containerWidth: number,
-): LayoutOutput => {
+const buildLayout = (tree: ParseTreeNode, containerWidth: number): LayoutOutput => {
   const hierarchy: d3.HierarchyNode<ParseTreeNode> = d3.hierarchy<ParseTreeNode>(tree);
   const dy: number = Math.max(50, (containerWidth / hierarchy.leaves().length) * 0.8);
 
   const layout: d3.TreeLayout<ParseTreeNode> = d3
     .tree<ParseTreeNode>()
     .nodeSize([NODE_DX, dy])
-    .separation((
-      a: d3.HierarchyPointNode<ParseTreeNode>,
-      b: d3.HierarchyPointNode<ParseTreeNode>,
-    ) => (a.parent === b.parent ? 1.5 : 2.5));
+    .separation(
+      (a: d3.HierarchyPointNode<ParseTreeNode>, b: d3.HierarchyPointNode<ParseTreeNode>) =>
+        a.parent === b.parent ? 1.5 : 2.5,
+    );
 
   const root: d3.HierarchyPointNode<ParseTreeNode> = layout(hierarchy);
-  root.descendants().forEach((
-    d: d3.HierarchyPointNode<ParseTreeNode>,
-  ) => {
+  root.descendants().forEach((d: d3.HierarchyPointNode<ParseTreeNode>) => {
     d.x += MARGINS.left;
     d.y += MARGINS.top;
   });
@@ -166,9 +142,7 @@ const initSvg = (
   width: number,
   height: number,
 ): d3.Selection<SVGGElement, unknown, null, undefined> => {
-  svg
-    .attr("viewBox", `0 0 ${width} ${height}`)
-    .attr("preserveAspectRation", "xMidYMid meet");
+  svg.attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRation", "xMidYMid meet");
 
   const { root }: LayoutOutput = buildLayout(tree, width);
   const xValues: Array<number> = root.descendants().map((d) => d.x);
@@ -202,11 +176,14 @@ const renderLinks = (
   g: d3.Selection<SVGGElement, unknown, null, undefined>,
   root: d3.HierarchyPointNode<ParseTreeNode>,
 ) => {
-  const links: d3.Selection<SVGLineElement, d3.HierarchyPointLink<ParseTreeNode>, SVGGElement, unknown> = g
+  const links: d3.Selection<
+    SVGLineElement,
+    d3.HierarchyPointLink<ParseTreeNode>,
+    SVGGElement,
+    unknown
+  > = g
     .selectAll<SVGLineElement, d3.HierarchyPointLink<ParseTreeNode>>(".link")
-    .data(root.links(), (
-      d: d3.HierarchyPointLink<ParseTreeNode>,
-    ) => d.target.data.id);
+    .data(root.links(), (d: d3.HierarchyPointLink<ParseTreeNode>) => d.target.data.id);
 
   links
     .enter()
@@ -238,13 +215,21 @@ const renderNodes = (
   root: d3.HierarchyPointNode<ParseTreeNode>,
   tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
 ) => {
-  const nodes: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown> = g
+  const nodes: d3.Selection<
+    SVGGElement,
+    d3.HierarchyPointNode<ParseTreeNode>,
+    SVGGElement,
+    unknown
+  > = g
     .selectAll<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>>(".node")
-    .data(root.descendants(), (
-      d:  d3.HierarchyPointNode<ParseTreeNode>,
-    ): string => d.data.id);
+    .data(root.descendants(), (d: d3.HierarchyPointNode<ParseTreeNode>): string => d.data.id);
 
-  const nodeEnter: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown> = nodes
+  const nodeEnter: d3.Selection<
+    SVGGElement,
+    d3.HierarchyPointNode<ParseTreeNode>,
+    SVGGElement,
+    unknown
+  > = nodes
     .enter()
     .append("g")
     .attr("class", "node")
@@ -256,10 +241,8 @@ const renderNodes = (
   nodeEnter
     .append("circle")
     .attr("r", 0)
-    .style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)])   // ← .style()
-    .style("stroke", (d) =>
-      d.depth === 0 ? "var(--color-neutral-100)" : "none",
-    )
+    .style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)]) // ← .style()
+    .style("stroke", (d) => (d.depth === 0 ? "var(--color-neutral-100)" : "none"))
     .style("stroke-width", (d) => (d.depth === 0 ? "3px" : "0"))
     .transition()
     .duration(TRANSITION_MS)
@@ -278,9 +261,7 @@ const renderNodes = (
         ? "var(--color-neutral-50)"
         : "var(--color-neutral-950)",
     )
-    .style("font-size", (d) =>
-      getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px",
-    )
+    .style("font-size", (d) => (getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px"))
     .transition()
     .duration(TRANSITION_MS)
     .style("opacity", 1);
@@ -293,13 +274,9 @@ const renderNodes = (
         ? "var(--color-neutral-50)"
         : "var(--color-neutral-950)",
     )
-    .style("font-size", (d) =>
-      getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px",
-    );
+    .style("font-size", (d) => (getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px"));
 
-  nodes
-    .select("circle")
-    .style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)]);
+  nodes.select("circle").style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)]);
 
   nodes
     .transition()
@@ -309,9 +286,7 @@ const renderNodes = (
   nodes.exit().remove();
 };
 
-const adjustZIndex = (
-  g: d3.Selection<SVGGElement, unknown, null, undefined>,
-) => {
+const adjustZIndex = (g: d3.Selection<SVGGElement, unknown, null, undefined>) => {
   g.selectAll(".link").lower();
   g.selectAll(".node").raise();
 };
@@ -327,20 +302,25 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   createEffect(() => {
     if (!svgRef || !props.tree) return;
 
-    const svg: d3.Selection<SVGSVGElement, unknown, null, undefined> = d3.select<SVGSVGElement, unknown>(svgRef);
+    const svg: d3.Selection<SVGSVGElement, unknown, null, undefined> = d3.select<
+      SVGSVGElement,
+      unknown
+    >(svgRef);
     const container: HTMLElement | null = svgRef.parentElement;
     if (!container) return;
 
     const width: number = container.clientWidth;
     const height: number = container.clientHeight;
 
-    let g: d3.Selection<SVGGElement, unknown, null, undefined> = svg.select<SVGGElement>("g.tree-g");
+    let g: d3.Selection<SVGGElement, unknown, null, undefined> =
+      svg.select<SVGGElement>("g.tree-g");
     if (g.empty()) {
       g = initSvg(svg, props.tree(), width, height);
     }
 
     const { root }: LayoutOutput = buildLayout(props.tree(), width);
-    const tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> = getOrCreateTooltip();
+    const tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> =
+      getOrCreateTooltip();
 
     renderLinks(g, root);
     renderNodes(g, root, tooltip);

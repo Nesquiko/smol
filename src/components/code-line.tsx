@@ -47,7 +47,8 @@ export const CodeLine: Component<CodeLineProps> = (props: CodeLineProps) => {
       );
     });
 
-    const caretAtEnd: boolean = props.caret().line === props.lineNum() && props.caret().col === props.line.length;
+    const caretAtEnd: boolean =
+      props.caret().line === props.lineNum() && props.caret().col === props.line.length;
 
     if (caretAtEnd) {
       result.push(
