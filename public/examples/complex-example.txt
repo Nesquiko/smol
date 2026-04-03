@@ -48,4 +48,7 @@ foo:=1;
 bar:=foo+2;
 baz:=bar-1;
 WRITE(foo,bar,baz);
+  n10   :=    n9
++
+n11;
 END

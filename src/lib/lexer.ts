@@ -56,8 +56,27 @@ class CorrectLexer implements Lexer {
       this.tokenPos.tokenEnd = args.linePos - 1;
       const token = result.state.emit(this.tokenPos);
       args.onTokenEmit(token);
-      this.tokenPos = undefined;
 
+      // +/- should be treated as `op`, not as start of number after IDENT/NUMBER/RPAREN
+      if (
+        (args.char === "+" || args.char === "-") &&
+        (token.type === "IDENT" || token.type === "NUMBER" || token.type === "RPAREN")
+      ) {
+        if (args.char === "-") {
+          args.onTokenEmit(
+            MINUS.emit({ line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos }),
+          );
+        } else if (args.char === "+") {
+          args.onTokenEmit(
+            PLUS.emit({ line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos }),
+          );
+        }
+        this.tokenPos = undefined;
+        this.state = Q0;
+        return;
+      }
+
+      this.tokenPos = undefined;
       this.state = Q0;
       // a token needs to receive at one additional char to confirm that it really
       // is that token. Instead of making the caller repeat the char, process
