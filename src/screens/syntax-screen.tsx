@@ -9,10 +9,11 @@ import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
-import { BufferType, ParseTreeNode, StackType, Token } from "~/lib/types";
+import {BufferType, ParserStep, ParseTreeNode, StackType, Token} from "~/lib/types";
 
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;
+  steps: Accessor<Array<ParserStep>>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -61,6 +62,8 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
     );
   };
 
+  const padWidth = (): number => String(logs().length).length;
+
   return (
     <div class="relative flex h-screen w-full flex-col items-center justify-center gap-6">
       <TokenFlyAnimation flyingTokens={flyingTokens} onComplete={handleFlyComplete} />
@@ -106,7 +109,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
             >
               <CardContent
                 ref={logsContainerRef}
-                class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-b-lg p-2 px-4"
+                class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-b-lg p-4"
               >
                 <For each={logs()}>
                   {(log: string, index) => (
@@ -119,7 +122,9 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                         "text-primary-400": log.startsWith("Expand"),
                       }}
                     >
-                      <span class="mr-2 text-primary-500 select-none">{index() + 1}.</span>
+                      <span class="mr-4 ml-2 font-mono text-primary-500 select-none text-sm">
+                        {String(index() + 1).padStart(padWidth(), " ")}
+                      </span>
                       {log}
                     </p>
                   )}
@@ -129,11 +134,15 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
           </Tabs>
         </Card>
 
-        <Stack stack={stack} cardRef={(el) => (stackCardRef = el)} />
+        <Stack
+          stack={stack}
+          cardRef={(el) => (stackCardRef = el)}
+        />
       </div>
 
       <SyntaxControls
         tokens={props.tokens}
+        steps={props.steps}
         buffer={buffer}
         setBuffer={setBuffer}
         setTree={setTree}

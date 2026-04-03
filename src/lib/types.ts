@@ -39,9 +39,9 @@ export type ParseTreeNode = {
 
 export type Direction = "none" | "backward" | "forward";
 
-export type ControlButton = "previous" | "next" | "play";
+export type ControlButton = "previous" | "next" | "play" | "first" | "last";
 
-export type Result = "could-not-determine" | "correct" | "incorrect";
+export type Result = "unknown" | "correct" | "incorrect";
 
 export type Caret = {
   line: number;
@@ -103,3 +103,10 @@ export interface ParserStep {
 }
 
 export type NodeType = "eof" | "epsilon" | "token" | "non-terminal" | "unknown";
+
+export type Margins = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};

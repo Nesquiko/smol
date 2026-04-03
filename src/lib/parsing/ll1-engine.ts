@@ -4,7 +4,7 @@ import {
   NonTerminal,
   ParserAction,
   ParserStep,
-  ParseTreeNode,
+  ParseTreeNode, Result,
   Token,
   TokenType,
 } from "~/lib/types";
@@ -20,15 +20,18 @@ const mkNode = (
   children,
 });
 
-function cloneTree(node: ParseTreeNode): ParseTreeNode {
+const cloneTree = (node: ParseTreeNode): ParseTreeNode => {
   return {
     id: node.id,
     data: typeof node.data === "object" ? { ...node.data } : node.data,
     children: node.children?.map(cloneTree),
   };
-}
+};
 
-export function buildParserSteps(tokens: Token[]): ParserStep[] {
+export function buildParserSteps(
+  tokens: Array<Token>,
+  onResult: (result: Result) => void,
+): Array<ParserStep> {
   _nodeId = 0;
   const steps: ParserStep[] = [];
 
@@ -72,6 +75,8 @@ export function buildParserSteps(tokens: Token[]): ParserStep[] {
     if (top === "$") {
       if (lookahead.type === "$") {
         steps.push(snap("Accept — input fully consumed.", { kind: "accept" }));
+
+        onResult("correct");
       } else {
         steps.push(
           snap(`Error — expected end of input, got '${lookahead.type}'.`, {
@@ -79,6 +84,8 @@ export function buildParserSteps(tokens: Token[]): ParserStep[] {
             errorMessage: "Unexpected token at end",
           }),
         );
+
+        onResult("incorrect");
       }
       break;
     }
@@ -102,6 +109,8 @@ export function buildParserSteps(tokens: Token[]): ParserStep[] {
             { kind: "error", errorMessage: `Expected ${top}` },
           ),
         );
+
+        onResult("incorrect");
         break;
       }
     } else {
@@ -114,6 +123,8 @@ export function buildParserSteps(tokens: Token[]): ParserStep[] {
             { kind: "error", errorMessage: `No rule for (${top}, ${lookahead.type})` },
           ),
         );
+
+        onResult("incorrect");
         break;
       }
 
@@ -157,6 +168,8 @@ export function buildParserSteps(tokens: Token[]): ParserStep[] {
         errorMessage: "Step limit exceeded",
       }),
     );
+
+    onResult("incorrect");
   }
 
   return steps;

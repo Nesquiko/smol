@@ -1,5 +1,7 @@
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
+import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
 import {
@@ -18,12 +20,12 @@ import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { buildParserSteps } from "~/lib/parsing/ll1-engine";
-import { BufferType, ParseTreeNode, StackType, Token } from "~/lib/types";
+import {BufferType, ParserStep, ParseTreeNode, StackType, Token} from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 interface SyntaxControlsProps {
   tokens: Accessor<Array<Token>>;
+  steps: Accessor<Array<ParserStep>>;
   buffer: Accessor<BufferType>;
   setBuffer: Setter<BufferType>;
   setTree: Setter<ParseTreeNode>;
@@ -39,13 +41,12 @@ interface SyntaxControlsProps {
 export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   const [stepIndex, setStepIndex] = createSignal(0);
   const [isJumping, setIsJumping] = createSignal(false);
+  const [hasSeenLastStep, setHasSeenLastStep] = createSignal<boolean>(false);
 
   const cellRefs: Array<HTMLDivElement | undefined> = [];
 
-  const steps = createMemo(() => buildParserSteps(props.tokens()));
-
   createEffect(() => {
-    const step = steps()[stepIndex()];
+    const step = props.steps()[stepIndex()];
     if (!step) return;
 
     props.setStack(step.stack as StackType);
@@ -54,22 +55,22 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     );
     props.setTree(step.tree);
     props.setLogs(
-      steps()
+      props.steps()
         .slice(0, stepIndex() + 1)
         .map((s) => s.log),
     );
   });
 
   const goTo = (index: number) => {
-    setStepIndex(Math.max(0, Math.min(index, steps().length - 1)));
+    setStepIndex(Math.max(0, Math.min(index, props.steps().length - 1)));
   };
 
   const performStep = (dir: "next" | "previous") => {
     const nextIndex = dir === "next" ? stepIndex() + 1 : stepIndex() - 1;
-    const clamped = Math.max(0, Math.min(nextIndex, steps().length - 1));
+    const clamped = Math.max(0, Math.min(nextIndex, props.steps().length - 1));
 
     if (dir === "next") {
-      const nextStep = steps()[clamped];
+      const nextStep = props.steps()[clamped];
       if (nextStep?.action.kind === "match") {
         const tokenIdx = nextStep.currentTokenIndex;
         const cellEl = cellRefs[tokenIdx];
@@ -83,7 +84,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   };
 
   const nextStep = () => {
-    if (stepIndex() >= steps().length - 1) return;
+    if (stepIndex() >= props.steps().length - 1) return;
     blink("next");
     performStep("next");
   };
@@ -97,7 +98,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   const jumpToStepForToken = async (tokenIndex: number) => {
     if (isJumping()) return;
 
-    const targetStepIndex = steps().reduce((best, step, i) => {
+    const targetStepIndex = props.steps().reduce((best, step, i) => {
       if (step.currentTokenIndex <= tokenIndex) return i;
       return best;
     }, 0);
@@ -116,17 +117,35 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     setIsJumping(false);
   };
 
+  const jumpToFirst = () => {
+    if (stepIndex() === 0) return;
+    goTo(0);
+  };
+
+  const jumpToLast = () => {
+    if (stepIndex() >= props.steps().length - 1) return;
+    goTo(props.steps().length - 1);
+  };
+
   const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
     nextStep,
     previousStep,
+    jumpToFirst,
+    jumpToLast,
   );
 
   const cellWidth = 72;
   const cellGap = 8;
 
-  const currentTokenIndex = createMemo(() => steps()[stepIndex()]?.currentTokenIndex ?? 0);
+  const currentTokenIndex = createMemo(() => props.steps()[stepIndex()]?.currentTokenIndex ?? 0);
 
   const translateX = (): number => -(currentTokenIndex() * (cellWidth + cellGap));
+
+  createEffect(() => {
+    if (stepIndex() >= props.steps().length - 1) {
+      setHasSeenLastStep(true);
+    }
+  });
 
   return (
     <div class={cn("flex w-full flex-col items-center justify-center gap-6 px-6", props.class)}>
@@ -181,7 +200,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
       <div class="-mt-4 flex flex-row items-center justify-center gap-2 text-xs text-muted-foreground">
         <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{stepIndex() + 1}</span>
         <span class="select-none">/</span>
-        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{steps().length}</span>
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{props.steps().length}</span>
       </div>
 
       <div class="grid w-full grid-cols-3 gap-3 pb-6">
@@ -200,6 +219,19 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
         </div>
 
         <div class="relative flex flex-row items-center justify-center gap-3">
+          <Button
+            variant="default"
+            size="icon"
+            class="cursor-pointer transition-all"
+            classList={{
+              "opacity-50 scale-95": lastPressedButton() === "first",
+            }}
+            onClick={jumpToFirst}
+            disabled={isJumping() || stepIndex() === 0}
+          >
+            <ChevronsLeftIcon class="text-primary-900" />
+          </Button>
+
           <Button
             variant="default"
             size="icon"
@@ -234,18 +266,31 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
             </Show>
           </Button>
 
+          <Button
+            variant="default"
+            size="icon"
+            class="cursor-pointer transition-all"
+            classList={{
+              "opacity-50 scale-95": lastPressedButton() === "next",
+            }}
+            onClick={nextStep}
+            disabled={isJumping() || stepIndex() >= props.steps().length - 1}
+          >
+            <ChevronRightIcon class="text-primary-900" />
+          </Button>
+
           <div class="relative">
             <Button
               variant="default"
               size="icon"
               class="cursor-pointer transition-all"
               classList={{
-                "opacity-50 scale-95": lastPressedButton() === "next",
+                "opacity-50 scale-95": lastPressedButton() === "last",
               }}
-              onClick={nextStep}
-              disabled={isJumping() || stepIndex() >= steps().length - 1}
+              onClick={jumpToLast}
+              disabled={isJumping() || stepIndex() >= props.steps().length - 1}
             >
-              <ChevronRightIcon class="text-primary-900" />
+              <ChevronsRightIcon class="text-primary-900" />
             </Button>
 
             <ControlsInfo />
@@ -254,15 +299,37 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
 
         <div class="flex w-full items-center justify-end">
           <Show when={props.withNavigation}>
-            <Button
-              variant="ghost"
-              size="default"
-              class="w-fit cursor-pointer"
-              onClick={props.onContinue}
-            >
-              Results
-              <ChevronRightIcon />
-            </Button>
+            <Show when={hasSeenLastStep()} fallback={(
+              <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                <TooltipTrigger
+                  as={Button}
+                  variant="ghost"
+                  size="default"
+                  class="w-fit text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60"
+                  classList={{
+                    "cursor-pointer": hasSeenLastStep(),
+                    "cursor-not-allowed": !hasSeenLastStep(),
+                  }}
+                >
+                  Results
+                  <ChevronRightIcon />
+                </TooltipTrigger>
+
+                <TooltipContent>
+                  Check out the last step before seeing the results!
+                </TooltipContent>
+              </Tooltip>
+            )}>
+              <Button
+                variant="ghost"
+                size="default"
+                class="w-fit cursor-pointer"
+                onClick={props.onContinue}
+              >
+                Results
+                <ChevronRightIcon />
+              </Button>
+            </Show>
           </Show>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { createEffect, createSignal, onCleanup, Setter } from "solid-js";
 import {
   AUTO_MODE_SPEED_MS,
   BLINK_DURATION,
-  KEYS_BACKWARD,
+  KEYS_BACKWARD, KEYS_FAST_BACKWARD, KEYS_FAST_FORWARD,
   KEYS_FORWARD,
   KEYS_NEXT,
   KEYS_PREVIOUS,
@@ -17,7 +17,12 @@ export type UseAutoStepType = {
   blink: (button: ControlButton) => void;
 };
 
-export const useAutoStep = (nextStep: () => void, previousStep: () => void): UseAutoStepType => {
+export const useAutoStep = (
+  nextStep: () => void,
+  previousStep: () => void,
+  firstStep?: () => void,
+  lastStep?: () => void,
+): UseAutoStepType => {
   const [autoModeDirection, setAutoModeDirection] = createSignal<Direction>("none");
   const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(
     undefined,
@@ -54,6 +59,12 @@ export const useAutoStep = (nextStep: () => void, previousStep: () => void): Use
       } else if (KEYS_BACKWARD.includes(e.key)) {
         blink("play");
         setAutoModeDirection(autoModeDirection() === "none" ? "backward" : "none");
+      } else if (KEYS_FAST_FORWARD.includes(e.key)) {
+        blink("last");
+        lastStep?.();
+      } else if (KEYS_FAST_BACKWARD.includes(e.key)) {
+        blink("first");
+        firstStep?.();
       }
     };
 
