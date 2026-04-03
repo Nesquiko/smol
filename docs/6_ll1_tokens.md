@@ -1,17 +1,18 @@
 ## Tokens
 
+- **AND** = _AND_
 - **BEGIN** = _BEGIN_
 - **END** = _END_
+- **ELSE** = _ELSE_
+- **FALSE** = _FALSE_
+- **IF** = _IF_
+- **NOT** = _NOT_
+- **OR** = _OR_
 - **READ** = _READ_
 - **WRITE** = _WRITE_
-- **IF** = _IF_
-- **ELSE** = _ELSE_
 - **THEN** = _THEN_
-- **OR** = _OR_
-- **AND** = _AND_
-- **NOT** = _NOT_
 - **TRUE** = _TRUE_
-- **FALSE** = _FALSE_
+
 - **IDENT** = letter (letter | digit09)\*
 - **NUMBER** = sign? digit19 digit09\*
 
