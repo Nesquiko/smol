@@ -5,8 +5,8 @@ on:
   pull_request:
 
 jobs:
-  build:
-    name: build-app
+  ci:
+    name: ci
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
