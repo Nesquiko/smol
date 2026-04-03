@@ -56,11 +56,7 @@ export function buildParserSteps(
 
   const nodeStack: ParseTreeNode[] = [mkNode("$"), root];
 
-  const snap = (
-    log: string,
-    action: ParserAction,
-    currentNode?: ParseTreeNode,
-  ): ParserStep => ({
+  const snap = (log: string, action: ParserAction, currentNode?: ParseTreeNode): ParserStep => ({
     stack: [...symStack],
     bufferIndex,
     tree: cloneTree(root),

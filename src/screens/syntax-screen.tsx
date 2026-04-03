@@ -11,9 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
 import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 
-type SyntaxTab =
-  | "tree"
-  | "logs";
+type SyntaxTab = "tree" | "logs";
 
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;

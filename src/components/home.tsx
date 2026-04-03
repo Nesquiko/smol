@@ -2,19 +2,21 @@ import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
 import { TOKENS_TEST } from "~/lib/data/test-data";
 import { buildParserSteps } from "~/lib/parsing/ll1-engine";
-import {Screen, ParserStep, Result, Token, SyntaxErrorMode, LexErrorMode} from "~/lib/types";
+import { Screen, ParserStep, Result, Token, SyntaxErrorMode, LexErrorMode } from "~/lib/types";
 import { InputScreen } from "~/screens/input-screen";
+import { LexConfigScreen } from "~/screens/lex-config-screen";
 import { LexScreen } from "~/screens/lex-screen";
 import { ResultsScreen } from "~/screens/results-screen";
+import { SyntaxConfigScreen } from "~/screens/syntax-config-screen";
 import { SyntaxScreen } from "~/screens/syntax-screen";
-import {LexConfigScreen} from "~/screens/lex-config-screen";
-import {SyntaxConfigScreen} from "~/screens/syntax-config-screen";
 
 export const Home = () => {
   const [currentPage, setCurrentPage] = createSignal<Screen>("input");
   const [fileContent, setFileContent] = createSignal<string | undefined>(undefined);
   const [lexErrorMode, setLexErrorMode] = createSignal<LexErrorMode | undefined>(undefined);
-  const [syntaxErrorMode, setSyntaxErrorMode] = createSignal<SyntaxErrorMode | undefined>(undefined);
+  const [syntaxErrorMode, setSyntaxErrorMode] = createSignal<SyntaxErrorMode | undefined>(
+    undefined,
+  );
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   const [tokens, setTokens] = createSignal<Array<Token>>(TOKENS_TEST);
   const [result, setResult] = createSignal<Result>("unknown");

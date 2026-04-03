@@ -1,4 +1,7 @@
-import {Accessor, Component, createSignal, For, Setter} from "solid-js";
+import CircleCheckIcon from "lucide-solid/icons/circle-check";
+import FileInputIcon from "lucide-solid/icons/file-input";
+import { Accessor, Component, createSignal, For, Setter } from "solid-js";
+import { Dynamic } from "solid-js/web";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -10,9 +13,6 @@ import {
   CommandList,
 } from "~/components/ui/command";
 import { EXAMPLES, InputExample } from "~/lib/data/examples";
-import {Dynamic} from "solid-js/web";
-import CircleCheckIcon from "lucide-solid/icons/circle-check";
-import FileInputIcon from "lucide-solid/icons/file-input";
 
 interface InputCommandProps {
   fileContent: Accessor<string | undefined>;
@@ -54,7 +54,7 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
 
         <Dynamic
           component={props.fileContent() === undefined ? FileInputIcon : CircleCheckIcon}
-          class="absolute left-3 top-3 size-6"
+          class="absolute top-3 left-3 size-6"
           classList={{
             "text-primary-300": props.fileContent() !== undefined,
             "text-primary-500": props.fileContent() === undefined,

@@ -1,6 +1,12 @@
 import * as d3 from "d3";
 import DownloadIcon from "lucide-solid/icons/download";
-import {Accessor, Component, createEffect, createSignal, Setter} from "solid-js";
+import EyeIcon from "lucide-solid/icons/eye";
+import EyeOffIcon from "lucide-solid/icons/eye-off";
+import HouseIcon from "lucide-solid/icons/house";
+import TargetIcon from "lucide-solid/icons/target";
+import { Accessor, Component, createEffect, createSignal, Setter } from "solid-js";
+import { Dynamic } from "solid-js/web";
+import { Motion } from "solid-motionone";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
@@ -14,12 +20,6 @@ import {
   TokenType,
 } from "~/lib/types";
 import { cn, downloadSvg } from "~/lib/ui-utils";
-import {Motion} from "solid-motionone";
-import TargetIcon from "lucide-solid/icons/target";
-import HouseIcon from "lucide-solid/icons/house";
-import EyeIcon from "lucide-solid/icons/eye";
-import EyeOffIcon from "lucide-solid/icons/eye-off";
-import {Dynamic} from "solid-js/web";
 
 const RADIUS: number = 16;
 const ROOT_RADIUS: number = 21;
@@ -168,10 +168,7 @@ const initSvg = (
 
   const initial = d3.zoomIdentity.translate(targetX - root.x, targetY - root.y).scale(1);
 
-  const g = svg
-    .append("g")
-    .attr("class", "tree-g")
-    .attr("transform", initial.toString());
+  const g = svg.append("g").attr("class", "tree-g").attr("transform", initial.toString());
 
   const zoom = d3
     .zoom<SVGSVGElement, unknown>()
@@ -265,7 +262,11 @@ const renderNodes = (
     .attr("r", 0)
     .style("fill", (d) => getNodeColor(d.data))
     .style("stroke", (d) =>
-      currentNodeId() === d.data.id ? "#FFEE8C" : d.depth === 0 ? "var(--color-neutral-100)" : "none"
+      currentNodeId() === d.data.id
+        ? "#FFEE8C"
+        : d.depth === 0
+          ? "var(--color-neutral-100)"
+          : "none",
     )
     .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0))
     .transition()
@@ -300,10 +301,15 @@ const renderNodes = (
     )
     .style("font-size", (d) => (getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px"));
 
-  nodes.select("circle")
+  nodes
+    .select("circle")
     .style("fill", (d) => getNodeColor(d.data))
     .style("stroke", (d) =>
-      currentNodeId() === d.data.id ? "#FFEE8C" : d.depth === 0 ? "var(--color-neutral-100)" : "none"
+      currentNodeId() === d.data.id
+        ? "#FFEE8C"
+        : d.depth === 0
+          ? "var(--color-neutral-100)"
+          : "none",
     )
     .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0));
 
@@ -349,10 +355,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
 
     const transform = d3.zoomIdentity.translate(targetX - root.x, targetY - root.y).scale(1);
 
-    svg
-      .transition()
-      .duration(500)
-      .call(zoomBehavior.transform, transform);
+    svg.transition().duration(500).call(zoomBehavior.transform, transform);
 
     setCentered(true);
   };
@@ -361,12 +364,18 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
     if (!svgRef || !zoomBehavior || !nodeId) return;
 
     const svg: d3.Selection<SVGSVGElement, unknown, null, undefined> = d3.select(svgRef);
-    const g: d3.Selection<SVGGElement, unknown, null, undefined> = svg.select<SVGGElement>("g.tree-g");
+    const g: d3.Selection<SVGGElement, unknown, null, undefined> =
+      svg.select<SVGGElement>("g.tree-g");
     if (g.empty()) return;
 
-    const nodeSelection: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown> = g.selectAll<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>>(".node").filter(
-      (d: d3.HierarchyPointNode<ParseTreeNode>): boolean => d.data.id === nodeId,
-    );
+    const nodeSelection: d3.Selection<
+      SVGGElement,
+      d3.HierarchyPointNode<ParseTreeNode>,
+      SVGGElement,
+      unknown
+    > = g
+      .selectAll<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>>(".node")
+      .filter((d: d3.HierarchyPointNode<ParseTreeNode>): boolean => d.data.id === nodeId);
     if (nodeSelection.empty()) return;
 
     const nodeData = nodeSelection.datum() as d3.HierarchyPointNode<ParseTreeNode>;
@@ -374,7 +383,9 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
     const width: number = svgRef.clientWidth;
     const height: number = svgRef.clientHeight;
 
-    const transform: d3.ZoomTransform = d3.zoomIdentity.translate(width / 2 - nodeData.x, height / 2 - nodeData.y).scale(1);
+    const transform: d3.ZoomTransform = d3.zoomIdentity
+      .translate(width / 2 - nodeData.x, height / 2 - nodeData.y)
+      .scale(1);
 
     svg.transition().duration(500).call(zoomBehavior.transform, transform);
   };
@@ -452,7 +463,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.2 }}
-        class="absolute right-2 top-2"
+        class="absolute top-2 right-2"
       >
         <Tooltip placement="left" openDelay={0} closeDelay={0}>
           <TooltipTrigger
@@ -466,9 +477,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
             <HouseIcon />
           </TooltipTrigger>
 
-          <TooltipContent>
-            Jump to root node
-          </TooltipContent>
+          <TooltipContent>Jump to root node</TooltipContent>
         </Tooltip>
       </Motion.div>
 
@@ -477,7 +486,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.2 }}
-        class="absolute right-2 top-9"
+        class="absolute top-9 right-2"
       >
         <Tooltip placement="left" openDelay={0} closeDelay={0}>
           <TooltipTrigger
@@ -490,9 +499,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
             <TargetIcon />
           </TooltipTrigger>
 
-          <TooltipContent>
-            Jump to last processed node
-          </TooltipContent>
+          <TooltipContent>Jump to last processed node</TooltipContent>
         </Tooltip>
       </Motion.div>
 
@@ -501,7 +508,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.2 }}
-        class="absolute right-2 top-16"
+        class="absolute top-16 right-2"
       >
         <Tooltip placement="left" openDelay={0} closeDelay={0}>
           <TooltipTrigger
@@ -519,7 +526,9 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
           </TooltipTrigger>
 
           <TooltipContent>
-            {followNode() ? "Follow last processed node enabled" : "Follow last processed node disabled"}
+            {followNode()
+              ? "Follow last processed node enabled"
+              : "Follow last processed node disabled"}
           </TooltipContent>
         </Tooltip>
       </Motion.div>

@@ -1,9 +1,9 @@
-import {Accessor, Component, Setter, Show} from "solid-js";
+import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import { Accessor, Component, Setter, Show } from "solid-js";
 
 import { InputCommand } from "~/components/input-command";
-import {Button} from "~/components/ui/button";
-import {Tooltip, TooltipContent, TooltipTrigger} from "~/components/ui/tooltip";
-import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 
 interface InputScreenProps {
   fileContent: Accessor<string | undefined>;
@@ -13,15 +13,12 @@ interface InputScreenProps {
 
 export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps) => {
   return (
-    <div class="flex flex-col flex-1 items-center justify-center w-full min-h-screen relative">
+    <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center">
       <div class="flex w-full max-w-md items-center justify-center">
-        <InputCommand
-          fileContent={props.fileContent}
-          setFileContent={props.setFileContent}
-        />
+        <InputCommand fileContent={props.fileContent} setFileContent={props.setFileContent} />
       </div>
 
-      <div class="absolute p-6 bottom-0 right-0">
+      <div class="absolute right-0 bottom-0 p-6">
         <Show
           when={props.fileContent() !== undefined}
           fallback={
@@ -30,15 +27,13 @@ export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps
                 as={Button}
                 variant="ghost"
                 size="default"
-                class="w-fit text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60 cursor-not-allowed"
+                class="w-fit cursor-not-allowed text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60"
               >
                 Lexical configuration
-                <ChevronRightIcon/>
+                <ChevronRightIcon />
               </TooltipTrigger>
 
-              <TooltipContent>
-                Choose an input file before continuing
-              </TooltipContent>
+              <TooltipContent>Choose an input file before continuing</TooltipContent>
             </Tooltip>
           }
         >
@@ -49,7 +44,7 @@ export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps
             onClick={props.onContinue}
           >
             Lexical configuration
-            <ChevronRightIcon/>
+            <ChevronRightIcon />
           </Button>
         </Show>
       </div>

@@ -139,7 +139,9 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   const cellWidth = 72;
   const cellGap = 8;
 
-  const currentTokenIndex = createMemo(() => props.steps()[props.stepIndex()]?.currentTokenIndex ?? 0);
+  const currentTokenIndex = createMemo(
+    () => props.steps()[props.stepIndex()]?.currentTokenIndex ?? 0,
+  );
 
   const translateX = (): number => -(currentTokenIndex() * (cellWidth + cellGap));
 
@@ -200,7 +202,9 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
       </div>
 
       <div class="-mt-4 flex flex-row items-center justify-center gap-2 text-xs text-muted-foreground">
-        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{props.stepIndex() + 1}</span>
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">
+          {props.stepIndex() + 1}
+        </span>
         <span class="select-none">/</span>
         <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">
           {props.steps().length}

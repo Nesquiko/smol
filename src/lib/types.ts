@@ -109,15 +109,9 @@ export type Margins = {
   left: number;
 };
 
-export type LexErrorMode =
-  | "lex-no-errors"
-  | "lex-error-1"
-  | "lex-error-2";
+export type LexErrorMode = "lex-no-errors" | "lex-error-1" | "lex-error-2";
 
-export type SyntaxErrorMode =
-  | "syntax-no-errors"
-  | "syntax-error-1"
-  | "syntax-error-2";
+export type SyntaxErrorMode = "syntax-no-errors" | "syntax-error-1" | "syntax-error-2";
 
 export type ErrorModeData = {
   mode: LexErrorMode | SyntaxErrorMode;
