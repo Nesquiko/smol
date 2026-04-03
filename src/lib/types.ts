@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-solid";
+
 export type Token = {
   type: TokenType;
   value: string;
@@ -29,11 +31,12 @@ export type Operator = "ASSIGN" | "PLUS" | "MINUS";
 
 export type Punctuation = "SEMI" | "LPAREN" | "RPAREN" | "COMMA";
 
-export type Page = "input" | "lex" | "syntax" | "results";
+export type Screen = "input" | "lex-config" | "lex" | "syntax-config" | "syntax" | "results";
 
 export type ParseTreeNode = {
   id: string;
   data: Token | NonTerminal | TokenType | Dollar;
+  visited: boolean;
   children?: Array<ParseTreeNode>;
 };
 
@@ -77,12 +80,6 @@ export type StackType = Array<StackItem>;
 
 export type LL1Table = Record<NonTerminal, Partial<Record<TokenType | Dollar, number>>>;
 
-type Range<N extends number, Result extends number[] = []> = Result["length"] extends N
-  ? Result[number]
-  : Range<N, [...Result, Result["length"]]>;
-
-export type Rule = Range<34>;
-
 export type ParserActionKind = "init" | "expand" | "match" | "accept" | "error";
 
 export interface ParserAction {
@@ -94,12 +91,13 @@ export interface ParserAction {
 }
 
 export interface ParserStep {
-  stack: string[];
+  stack: Array<string>;
   bufferIndex: number;
   tree: ParseTreeNode;
   log: string;
   action: ParserAction;
   currentTokenIndex: number;
+  currentNodeId: string | undefined;
 }
 
 export type NodeType = "eof" | "epsilon" | "token" | "non-terminal" | "unknown";
@@ -109,4 +107,21 @@ export type Margins = {
   right: number;
   bottom: number;
   left: number;
+};
+
+export type LexErrorMode =
+  | "lex-no-errors"
+  | "lex-error-1"
+  | "lex-error-2";
+
+export type SyntaxErrorMode =
+  | "syntax-no-errors"
+  | "syntax-error-1"
+  | "syntax-error-2";
+
+export type ErrorModeData = {
+  mode: LexErrorMode | SyntaxErrorMode;
+  title: string;
+  description: string;
+  icon: LucideIcon;
 };

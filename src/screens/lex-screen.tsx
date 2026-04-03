@@ -223,7 +223,7 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                     onClick={props.onBack}
                   >
                     <ChevronLeftIcon />
-                    File input
+                    Lexical configuration
                   </Button>
                 </div>
 
@@ -284,7 +284,7 @@ export const LexScreen: Component<LexScreenProps> = (props: LexScreenProps) => {
                     class="w-fit cursor-pointer"
                     onClick={props.onContinue}
                   >
-                    Syntax analysis
+                    Syntax configuration
                     <ChevronRightIcon />
                   </Button>
                 </div>

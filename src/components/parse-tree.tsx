@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import DownloadIcon from "lucide-solid/icons/download";
-import { Accessor, Component, createEffect } from "solid-js";
+import {Accessor, Component, createEffect, createSignal, Setter} from "solid-js";
 
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
@@ -14,6 +14,12 @@ import {
   TokenType,
 } from "~/lib/types";
 import { cn, downloadSvg } from "~/lib/ui-utils";
+import {Motion} from "solid-motionone";
+import TargetIcon from "lucide-solid/icons/target";
+import HouseIcon from "lucide-solid/icons/house";
+import EyeIcon from "lucide-solid/icons/eye";
+import EyeOffIcon from "lucide-solid/icons/eye-off";
+import {Dynamic} from "solid-js/web";
 
 const RADIUS: number = 16;
 const ROOT_RADIUS: number = 21;
@@ -57,6 +63,11 @@ const getNodeLabel = (d: d3.HierarchyPointNode<ParseTreeNode>): string => {
 
 const getNodeRadius = (d: d3.HierarchyPointNode<ParseTreeNode>): number =>
   d.depth === 0 ? ROOT_RADIUS : RADIUS;
+
+const getNodeColor = (node: ParseTreeNode): string => {
+  if (!node.visited) return "var(--color-primary-800)";
+  return NODE_COLORS[getNodeType(node.data)];
+};
 
 const getOrCreateTooltip = (): d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> => {
   const existing = d3.select("body").select<HTMLDivElement>(`.${TOOLTIP_CLASS}`);
@@ -136,40 +147,50 @@ const buildLayout = (tree: ParseTreeNode, containerWidth: number): LayoutOutput 
   };
 };
 
+type SVGInitialization = {
+  graph: d3.Selection<SVGGElement, unknown, null, undefined>;
+  zoom: d3.ZoomBehavior<SVGSVGElement, unknown>;
+};
+
 const initSvg = (
   svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
   tree: ParseTreeNode,
   width: number,
   height: number,
-): d3.Selection<SVGGElement, unknown, null, undefined> => {
+  setCentered: Setter<boolean>,
+): SVGInitialization => {
   svg.attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRation", "xMidYMid meet");
 
-  const { root }: LayoutOutput = buildLayout(tree, width);
-  const xValues: Array<number> = root.descendants().map((d) => d.x);
-  const minX: number = Math.min(...xValues);
-  const maxX: number = Math.max(...xValues);
-  const treeWidth: number = maxX - minX;
+  const { root } = buildLayout(tree, width);
 
-  const initialTransform: d3.ZoomTransform = d3.zoomIdentity.translate(
-    (width - treeWidth) / 2 - minX,
-    MARGINS.top,
-  );
+  const targetX = width / 2;
+  const targetY = height / 2;
 
-  const g: d3.Selection<SVGGElement, unknown, null, undefined> = svg
+  const initial = d3.zoomIdentity.translate(targetX - root.x, targetY - root.y).scale(1);
+
+  const g = svg
     .append("g")
     .attr("class", "tree-g")
-    .attr("transform", initialTransform.toString());
+    .attr("transform", initial.toString());
 
-  const zoom: d3.ZoomBehavior<SVGSVGElement, unknown> = d3
+  const zoom = d3
     .zoom<SVGSVGElement, unknown>()
     .scaleExtent([0.1, 3])
     .on("start", () => svg.style("cursor", "grabbing"))
-    .on("zoom", (event) => g.attr("transform", event.transform.toString()))
+    .on("zoom", (event) => {
+      g.attr("transform", event.transform.toString());
+
+      const different: boolean =
+        Math.abs(event.transform.x - initial.x) > 1 ||
+        Math.abs(event.transform.y - initial.y) > 1 ||
+        Math.abs(event.transform.k - initial.k) > 0.01;
+      setCentered(!different);
+    })
     .on("end", () => svg.style("cursor", "grab"));
 
-  svg.call(zoom).call(zoom.transform, initialTransform);
+  svg.call(zoom).call(zoom.transform, initial);
 
-  return g;
+  return { graph: g, zoom };
 };
 
 const renderLinks = (
@@ -214,6 +235,7 @@ const renderNodes = (
   g: d3.Selection<SVGGElement, unknown, null, undefined>,
   root: d3.HierarchyPointNode<ParseTreeNode>,
   tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
+  currentNodeId: Accessor<string | undefined>,
 ) => {
   const nodes: d3.Selection<
     SVGGElement,
@@ -241,9 +263,11 @@ const renderNodes = (
   nodeEnter
     .append("circle")
     .attr("r", 0)
-    .style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)]) // ← .style()
-    .style("stroke", (d) => (d.depth === 0 ? "var(--color-neutral-100)" : "none"))
-    .style("stroke-width", (d) => (d.depth === 0 ? "3px" : "0"))
+    .style("fill", (d) => getNodeColor(d.data))
+    .style("stroke", (d) =>
+      currentNodeId() === d.data.id ? "#FFEE8C" : d.depth === 0 ? "var(--color-neutral-100)" : "none"
+    )
+    .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0))
     .transition()
     .duration(TRANSITION_MS)
     .attr("r", getNodeRadius);
@@ -276,7 +300,12 @@ const renderNodes = (
     )
     .style("font-size", (d) => (getNodeType(d.data.data) === "non-terminal" ? "7px" : "6px"));
 
-  nodes.select("circle").style("fill", (d) => NODE_COLORS[getNodeType(d.data.data)]);
+  nodes.select("circle")
+    .style("fill", (d) => getNodeColor(d.data))
+    .style("stroke", (d) =>
+      currentNodeId() === d.data.id ? "#FFEE8C" : d.depth === 0 ? "var(--color-neutral-100)" : "none"
+    )
+    .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0));
 
   nodes
     .transition()
@@ -293,14 +322,71 @@ const adjustZIndex = (g: d3.Selection<SVGGElement, unknown, null, undefined>) =>
 
 interface ParseTreeProps {
   tree: Accessor<ParseTreeNode>;
+  active: Accessor<boolean>;
+  currentNodeId: Accessor<string | undefined>;
   class?: string;
 }
 
 export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
+  const [centered, setCentered] = createSignal<boolean>(true);
+  const [followNode, setFollowNode] = createSignal<boolean>(true);
+
   let svgRef: SVGSVGElement | undefined;
 
+  let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | undefined;
+
+  const resetView = () => {
+    if (!svgRef || !zoomBehavior || !props.tree) return;
+
+    const svg = d3.select(svgRef);
+    const width = svgRef.clientWidth;
+    const height = svgRef.clientHeight;
+
+    const { root } = buildLayout(props.tree(), width);
+
+    const targetX = width / 2;
+    const targetY = height / 2;
+
+    const transform = d3.zoomIdentity.translate(targetX - root.x, targetY - root.y).scale(1);
+
+    svg
+      .transition()
+      .duration(500)
+      .call(zoomBehavior.transform, transform);
+
+    setCentered(true);
+  };
+
+  const jumpToNode = (nodeId: string | undefined) => {
+    if (!svgRef || !zoomBehavior || !nodeId) return;
+
+    const svg: d3.Selection<SVGSVGElement, unknown, null, undefined> = d3.select(svgRef);
+    const g: d3.Selection<SVGGElement, unknown, null, undefined> = svg.select<SVGGElement>("g.tree-g");
+    if (g.empty()) return;
+
+    const nodeSelection: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown> = g.selectAll<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>>(".node").filter(
+      (d: d3.HierarchyPointNode<ParseTreeNode>): boolean => d.data.id === nodeId,
+    );
+    if (nodeSelection.empty()) return;
+
+    const nodeData = nodeSelection.datum() as d3.HierarchyPointNode<ParseTreeNode>;
+
+    const width: number = svgRef.clientWidth;
+    const height: number = svgRef.clientHeight;
+
+    const transform: d3.ZoomTransform = d3.zoomIdentity.translate(width / 2 - nodeData.x, height / 2 - nodeData.y).scale(1);
+
+    svg.transition().duration(500).call(zoomBehavior.transform, transform);
+  };
+
   createEffect(() => {
-    if (!svgRef || !props.tree) return;
+    const nodeId: string | undefined = props.currentNodeId();
+    if (!followNode() || !nodeId) return;
+    jumpToNode(nodeId);
+  });
+
+  createEffect(() => {
+    if (!svgRef || !props.tree || !props.active()) return;
 
     const svg: d3.Selection<SVGSVGElement, unknown, null, undefined> = d3.select<
       SVGSVGElement,
@@ -315,15 +401,18 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
     let g: d3.Selection<SVGGElement, unknown, null, undefined> =
       svg.select<SVGGElement>("g.tree-g");
     if (g.empty()) {
-      g = initSvg(svg, props.tree(), width, height);
+      const { graph, zoom } = initSvg(svg, props.tree(), width, height, setCentered);
+      g = graph;
+      zoomBehavior = zoom;
     }
 
     const { root }: LayoutOutput = buildLayout(props.tree(), width);
+
     const tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> =
       getOrCreateTooltip();
 
     renderLinks(g, root);
-    renderNodes(g, root, tooltip);
+    renderNodes(g, root, tooltip, props.currentNodeId);
 
     adjustZIndex(g);
   });
@@ -336,19 +425,104 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
         style={{ display: "block", cursor: "grab" }}
       />
 
-      <Tooltip placement="top" openDelay={0} closeDelay={0}>
-        <TooltipTrigger
-          as={Button}
-          variant="ghost"
-          size="icon"
-          class="absolute right-2 bottom-2 size-6 cursor-pointer text-muted-foreground"
-          onClick={() => svgRef && downloadSvg(svgRef)}
-        >
-          <DownloadIcon />
-        </TooltipTrigger>
+      <Motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        class="absolute right-2 bottom-2"
+      >
+        <Tooltip placement="top" openDelay={0} closeDelay={0}>
+          <TooltipTrigger
+            as={Button}
+            variant="ghost"
+            size="icon"
+            class="absolute right-2 bottom-2 size-6 cursor-pointer text-muted-foreground"
+            onClick={() => svgRef && downloadSvg(svgRef)}
+          >
+            <DownloadIcon />
+          </TooltipTrigger>
 
-        <TooltipContent class="text-xs">Download as SVG</TooltipContent>
-      </Tooltip>
+          <TooltipContent class="text-xs">Download as SVG</TooltipContent>
+        </Tooltip>
+      </Motion.div>
+
+      <Motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        class="absolute right-2 top-2"
+      >
+        <Tooltip placement="left" openDelay={0} closeDelay={0}>
+          <TooltipTrigger
+            as={Button}
+            variant="ghost"
+            size="icon"
+            class="size-6 cursor-pointer text-muted-foreground"
+            onClick={resetView}
+            disabled={centered()}
+          >
+            <HouseIcon />
+          </TooltipTrigger>
+
+          <TooltipContent>
+            Jump to root node
+          </TooltipContent>
+        </Tooltip>
+      </Motion.div>
+
+      <Motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        class="absolute right-2 top-9"
+      >
+        <Tooltip placement="left" openDelay={0} closeDelay={0}>
+          <TooltipTrigger
+            as={Button}
+            variant="ghost"
+            size="icon"
+            class="size-6 cursor-pointer text-muted-foreground"
+            onClick={() => jumpToNode(props.currentNodeId())}
+          >
+            <TargetIcon />
+          </TooltipTrigger>
+
+          <TooltipContent>
+            Jump to last processed node
+          </TooltipContent>
+        </Tooltip>
+      </Motion.div>
+
+      <Motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        transition={{ duration: 0.2 }}
+        class="absolute right-2 top-16"
+      >
+        <Tooltip placement="left" openDelay={0} closeDelay={0}>
+          <TooltipTrigger
+            as={Button}
+            variant="ghost"
+            size="icon"
+            class="size-6 cursor-pointer"
+            classList={{
+              "text-muted-foreground bg-primary-700": followNode(),
+              "text-primary-400": !followNode(),
+            }}
+            onClick={() => setFollowNode((v) => !v)}
+          >
+            <Dynamic component={followNode() ? EyeIcon : EyeOffIcon} />
+          </TooltipTrigger>
+
+          <TooltipContent>
+            {followNode() ? "Follow last processed node enabled" : "Follow last processed node disabled"}
+          </TooltipContent>
+        </Tooltip>
+      </Motion.div>
     </div>
   );
 };

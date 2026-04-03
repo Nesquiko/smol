@@ -151,7 +151,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
 
         <div class="flex w-full flex-col gap-3">
           <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
-            Syntax Analysis
+            Syntax analysis
           </h2>
           <div class="flex w-full flex-col items-center justify-center gap-3 md:flex-row">
             <div class="grid w-full grid-cols-2 gap-3">

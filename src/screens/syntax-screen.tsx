@@ -11,6 +11,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { TREE_TEST_SMALL } from "~/lib/data/test-data";
 import { BufferType, ParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
 
+type SyntaxTab =
+  | "tree"
+  | "logs";
+
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;
   steps: Accessor<Array<ParserStep>>;
@@ -26,6 +30,9 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [stack, setStack] = createSignal<StackType>(["$"]);
   const [flyingTokens, setFlyingTokens] = createSignal<Array<FlyingToken>>([]);
   const [logs, setLogs] = createSignal<string[]>([]);
+  const [stepIndex, setStepIndex] = createSignal(0);
+
+  const [activeTab, setActiveTab] = createSignal<SyntaxTab>("tree");
 
   let stackCardRef: HTMLDivElement | undefined;
   let logsContainerRef: HTMLDivElement | undefined;
@@ -70,7 +77,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
       <div class="flex min-h-0 w-full max-w-5xl flex-1 flex-row items-stretch justify-center gap-6 p-6 pb-0">
         <Card class="relative flex h-full w-full flex-1 items-center justify-center p-0">
-          <Tabs defaultValue="tree" class="flex h-full w-full flex-col">
+          <Tabs value={activeTab()} onChange={setActiveTab} class="flex h-full w-full flex-col">
             <TabsList class="w-full rounded-t-lg rounded-b-none border-b bg-primary-900">
               <TabsTrigger
                 value="tree"
@@ -88,7 +95,12 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
             <TabsContent value="tree" class="mt-0 flex-1 rounded-b-lg bg-primary-900">
               <CardContent class="relative flex h-full w-full items-center justify-center overflow-hidden rounded-b-lg p-0">
-                <ParseTree tree={tree} class="z-20" />
+                <ParseTree
+                  tree={tree}
+                  active={() => activeTab() === "tree"}
+                  currentNodeId={() => props.steps()[stepIndex()]?.currentNodeId}
+                  class="z-20"
+                />
 
                 <div class="absolute bottom-3 left-3 z-30 flex flex-row items-center justify-center gap-2 text-muted">
                   <div class="flex flex-row items-center justify-center gap-1">
@@ -140,6 +152,8 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
       <SyntaxControls
         tokens={props.tokens}
         steps={props.steps}
+        stepIndex={stepIndex}
+        setStepIndex={setStepIndex}
         buffer={buffer}
         setBuffer={setBuffer}
         setTree={setTree}

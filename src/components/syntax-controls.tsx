@@ -26,6 +26,8 @@ import { cn } from "~/lib/ui-utils";
 interface SyntaxControlsProps {
   tokens: Accessor<Array<Token>>;
   steps: Accessor<Array<ParserStep>>;
+  stepIndex: Accessor<number>;
+  setStepIndex: Setter<number>;
   buffer: Accessor<BufferType>;
   setBuffer: Setter<BufferType>;
   setTree: Setter<ParseTreeNode>;
@@ -39,14 +41,13 @@ interface SyntaxControlsProps {
 }
 
 export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
-  const [stepIndex, setStepIndex] = createSignal(0);
   const [isJumping, setIsJumping] = createSignal(false);
   const [hasSeenLastStep, setHasSeenLastStep] = createSignal<boolean>(false);
 
   const cellRefs: Array<HTMLDivElement | undefined> = [];
 
   createEffect(() => {
-    const step = props.steps()[stepIndex()];
+    const step = props.steps()[props.stepIndex()];
     if (!step) return;
 
     props.setStack(step.stack as StackType);
@@ -57,17 +58,17 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     props.setLogs(
       props
         .steps()
-        .slice(0, stepIndex() + 1)
+        .slice(0, props.stepIndex() + 1)
         .map((s) => s.log),
     );
   });
 
   const goTo = (index: number) => {
-    setStepIndex(Math.max(0, Math.min(index, props.steps().length - 1)));
+    props.setStepIndex(Math.max(0, Math.min(index, props.steps().length - 1)));
   };
 
   const performStep = (dir: "next" | "previous") => {
-    const nextIndex = dir === "next" ? stepIndex() + 1 : stepIndex() - 1;
+    const nextIndex = dir === "next" ? props.stepIndex() + 1 : props.stepIndex() - 1;
     const clamped = Math.max(0, Math.min(nextIndex, props.steps().length - 1));
 
     if (dir === "next") {
@@ -85,13 +86,13 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   };
 
   const nextStep = () => {
-    if (stepIndex() >= props.steps().length - 1) return;
+    if (props.stepIndex() >= props.steps().length - 1) return;
     blink("next");
     performStep("next");
   };
 
   const previousStep = () => {
-    if (stepIndex() === 0) return;
+    if (props.stepIndex() === 0) return;
     blink("previous");
     performStep("previous");
   };
@@ -104,11 +105,11 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
       return best;
     }, 0);
 
-    if (targetStepIndex === stepIndex()) return;
+    if (targetStepIndex === props.stepIndex()) return;
 
     setIsJumping(true);
-    const direction = targetStepIndex > stepIndex() ? "next" : "previous";
-    const count = Math.abs(targetStepIndex - stepIndex());
+    const direction = targetStepIndex > props.stepIndex() ? "next" : "previous";
+    const count = Math.abs(targetStepIndex - props.stepIndex());
 
     for (let i = 0; i < count; i++) {
       performStep(direction);
@@ -119,12 +120,12 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   };
 
   const jumpToFirst = () => {
-    if (stepIndex() === 0) return;
+    if (props.stepIndex() === 0) return;
     goTo(0);
   };
 
   const jumpToLast = () => {
-    if (stepIndex() >= props.steps().length - 1) return;
+    if (props.stepIndex() >= props.steps().length - 1) return;
     goTo(props.steps().length - 1);
   };
 
@@ -138,12 +139,12 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   const cellWidth = 72;
   const cellGap = 8;
 
-  const currentTokenIndex = createMemo(() => props.steps()[stepIndex()]?.currentTokenIndex ?? 0);
+  const currentTokenIndex = createMemo(() => props.steps()[props.stepIndex()]?.currentTokenIndex ?? 0);
 
   const translateX = (): number => -(currentTokenIndex() * (cellWidth + cellGap));
 
   createEffect(() => {
-    if (stepIndex() >= props.steps().length - 1) {
+    if (props.stepIndex() >= props.steps().length - 1) {
       setHasSeenLastStep(true);
     }
   });
@@ -199,7 +200,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
       </div>
 
       <div class="-mt-4 flex flex-row items-center justify-center gap-2 text-xs text-muted-foreground">
-        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{stepIndex() + 1}</span>
+        <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">{props.stepIndex() + 1}</span>
         <span class="select-none">/</span>
         <span class="rounded-sm bg-primary-700 px-1 py-[1px] select-none">
           {props.steps().length}
@@ -216,7 +217,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               onClick={props.onBack}
             >
               <ChevronLeftIcon />
-              Lexical analysis
+              Syntax configuration
             </Button>
           </Show>
         </div>
@@ -230,7 +231,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "first",
             }}
             onClick={jumpToFirst}
-            disabled={isJumping() || stepIndex() === 0}
+            disabled={isJumping() || props.stepIndex() === 0}
           >
             <ChevronsLeftIcon class="text-primary-900" />
           </Button>
@@ -243,7 +244,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "previous",
             }}
             onClick={previousStep}
-            disabled={isJumping() || stepIndex() === 0}
+            disabled={isJumping() || props.stepIndex() === 0}
           >
             <ChevronLeftIcon class="text-primary-900" />
           </Button>
@@ -277,7 +278,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "next",
             }}
             onClick={nextStep}
-            disabled={isJumping() || stepIndex() >= props.steps().length - 1}
+            disabled={isJumping() || props.stepIndex() >= props.steps().length - 1}
           >
             <ChevronRightIcon class="text-primary-900" />
           </Button>
@@ -291,7 +292,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
                 "opacity-50 scale-95": lastPressedButton() === "last",
               }}
               onClick={jumpToLast}
-              disabled={isJumping() || stepIndex() >= props.steps().length - 1}
+              disabled={isJumping() || props.stepIndex() >= props.steps().length - 1}
             >
               <ChevronsRightIcon class="text-primary-900" />
             </Button>
