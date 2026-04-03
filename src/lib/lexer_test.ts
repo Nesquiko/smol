@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { newLexer } from "~/lib/lexer";
+import { LexError, newLexer } from "~/lib/lexer";
 import { Token } from "~/lib/types";
 
 test("lexes all reserved keywords as keyword tokens", () => {
@@ -82,42 +82,76 @@ test("finalizes keyword tokens at EOF", () => {
 });
 
 test("lexes punctuation and operators", () => {
-  // Verifies :=, ;, (, ), ,, +, and - produce the expected token types and values.
+  const line = 0;
+  const { tokens, error } = lex(":=;(),+-1;");
+
+  expect(error).toBeUndefined();
+  expect(tokens).toEqual([
+    { type: "ASSIGN", value: ":=", line, colStart: 0, colEnd: 1 },
+    { type: "SEMI", value: ";", line, colStart: 2, colEnd: 2 },
+    { type: "LPAREN", value: "(", line, colStart: 3, colEnd: 3 },
+    { type: "RPAREN", value: ")", line, colStart: 4, colEnd: 4 },
+    { type: "COMMA", value: ",", line, colStart: 5, colEnd: 5 },
+    { type: "PLUS", value: "+", line, colStart: 6, colEnd: 6 },
+    { type: "NUMBER", value: "-1", line, colStart: 7, colEnd: 8 },
+    { type: "SEMI", value: ";", line, colStart: 9, colEnd: 9 },
+  ]);
 });
 
 test("returns illegal-char error for standalone colon", () => {
-  // Verifies : without = produces an illegal-char error from the AssignStart state.
+  const { tokens, error } = lex(":");
+
+  expect(tokens).toEqual([]);
+  expect(error).toEqual({
+    type: "illegal-char",
+    tokenPos: { line: 0, tokenStart: 0, tokenEnd: 0 },
+    error: { char: "EOF", stateLabel: ":" },
+  });
 });
 
 test("returns illegal-char error for unsupported character in Q0", () => {
-  // Verifies an unsupported character like @ or # returns an illegal-char error with the correct state label.
+  const { tokens, error } = lex("@");
+
+  expect(tokens).toEqual([]);
+  expect(error).toEqual({
+    type: "illegal-char",
+    tokenPos: { line: 0, tokenStart: 0, tokenEnd: 0 },
+    error: { char: "@", stateLabel: "Q0" },
+  });
 });
 
-test("lexes positive numbers starting with nonzero digit", () => {
-  // Verifies numeric literals like 1 and 123 become NUMBER tokens.
+test("lexes numbers starting with nonzero digit", () => {
+  const line = 0;
+  const { tokens, error } = lex("69 -420 +42069");
+
+  expect(error).toBeUndefined();
+  expect(tokens).toEqual([
+    { type: "NUMBER", value: "69", line, colStart: 0, colEnd: 1 },
+    { type: "NUMBER", value: "-420", line, colStart: 3, colEnd: 6 },
+    { type: "NUMBER", value: "+42069", line, colStart: 8, colEnd: 13 },
+  ]);
 });
 
 test("does not treat zero as valid number start", () => {
-  // Verifies 0 is not accepted as a number start under current isNumberStart behavior and instead follows identifier/error behavior as intended.
-});
+  const { tokens, error } = lex("0");
 
-test("lexes signed numbers after plus and minus", () => {
-  // Verifies +1 and -9 are emitted as single NUMBER tokens rather than separate operator and number tokens.
-});
-
-test("emits plus and minus operators when not followed by digit", () => {
-  // Verifies + and - become PLUS and MINUS tokens when not immediately followed by a valid number-start digit.
-});
-
-test("tracks token positions correctly across a mixed input", () => {
-  // Verifies line, colStart, and colEnd are correct for keywords, identifiers, numbers, and punctuation in a realistic multi-token sample.
+  expect(tokens).toEqual([]);
+  expect(error).toEqual({
+    type: "illegal-char",
+    tokenPos: { line: 0, tokenStart: 0, tokenEnd: 0 },
+    error: { char: "0", stateLabel: "Q0" },
+  });
 });
 
 test("resets to Q0 after accepting a token and reprocesses the same delimiter", () => {
-  // Verifies the delimiter that confirms one token can also begin the next token sequence without being lost.
+  const line = 0;
+  const { tokens, error } = lex("BEGINX");
+
+  expect(error).toBeUndefined();
+  expect(tokens).toEqual([{ type: "IDENT", value: "BEGINX", line, colStart: 0, colEnd: 5 }]);
 });
 
-function lex(input: string): { tokens: Token[]; error?: unknown } {
+function lex(input: string): { tokens: Token[]; error?: LexError } {
   const lexer = newLexer();
   const tokens: Token[] = [];
 

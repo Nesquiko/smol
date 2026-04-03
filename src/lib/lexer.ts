@@ -10,7 +10,7 @@ interface LexerArgs {
 
 type IllegalCharError = { stateLabel: string; char: string };
 
-type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
+export type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
 
 const EOF = "EOF";
 
@@ -35,9 +35,9 @@ class CorrectLexer implements Lexer {
   private state: NonAcceptingState;
   private tokenPos: TokenPosition | undefined;
 
-  constructor(state: NonAcceptingState = Q0, tokenPos?: TokenPosition) {
+  constructor(state: NonAcceptingState = Q0) {
     this.state = state;
-    this.tokenPos = tokenPos;
+    this.tokenPos = { line: 0, tokenStart: 0, tokenEnd: 0 };
   }
 
   process(args: LexerArgs): LexError | undefined {
@@ -139,7 +139,7 @@ const Q0 = nonAccepting("Q0", (char) => {
   if (isNumberStart(char)) {
     return Ok(Num(char));
   }
-  if (isAlphanumeric(char)) {
+  if (isLetter(char)) {
     return Ok(Id(char));
   }
 
@@ -447,9 +447,11 @@ const Num = (num: string = "") => {
 const NumAccept = (num: string) => accepting("number-accept", { type: "NUMBER", value: num });
 
 const AssignStart = nonAccepting(":", (char) => {
-  if (char === "=") return Ok(ASSIGN);
+  if (char === "=") return Ok(AssignAccept);
   return Err({ char, stateLabel: AssignStart.label });
 });
+
+const AssignAccept = nonAccepting(":=", () => Ok(ASSIGN));
 
 const ASSIGN = accepting(":=", { type: "ASSIGN", value: ":=" });
 
@@ -470,14 +472,14 @@ const CommaStart = nonAccepting(",", () => Ok(COMMA));
 const COMMA = accepting(",-accept", { type: "COMMA", value: "," });
 
 const PlusStart = nonAccepting("+", (char) => {
-  if (isNumberStart(char)) return Ok(Num("+"));
+  if (isNumberStart(char)) return Ok(Num("+" + char));
   return Ok(PLUS);
 });
 
 const PLUS = accepting("+-accept", { type: "PLUS", value: "+" });
 
 const MinusStart = nonAccepting("-", (char) => {
-  if (isNumberStart(char)) return Ok(Num("-"));
+  if (isNumberStart(char)) return Ok(Num("-" + char));
   return Ok(MINUS);
 });
 
@@ -502,9 +504,8 @@ function accepting(label: string, emitToken: { type: TokenType; value: string })
 }
 
 function isWhitespaceChar(char: string): boolean {
-  if (char.length !== 1) {
-    throw new Error(`input must be a string of length 1, was '${char}'`);
-  }
+  if (char === EOF) return false;
+  assert(char.length === 1, `input must be a string of length 1, was '${char}'`);
   return /\s/.test(char);
 }
 
@@ -514,6 +515,10 @@ function isAcceptingState(s: State): s is AcceptingState {
 
 function isAlphanumeric(char: string): boolean {
   return /^[a-zA-Z0-9]$/.test(char);
+}
+
+function isLetter(char: string): boolean {
+  return /^[a-zA-Z]$/.test(char);
 }
 
 function isDigit(char: string): boolean {
