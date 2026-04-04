@@ -37,6 +37,7 @@ interface SyntaxControlsProps {
   onBack: () => void;
   onContinue: () => void;
   onFlyToken: (fromRect: DOMRect, label: string) => void;
+  treeFullscreen: Accessor<boolean>;
   class?: string;
 }
 
@@ -86,18 +87,21 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   };
 
   const nextStep = () => {
+    if (props.treeFullscreen()) return;
     if (props.stepIndex() >= props.steps().length - 1) return;
     blink("next");
     performStep("next");
   };
 
   const previousStep = () => {
+    if (props.treeFullscreen()) return;
     if (props.stepIndex() === 0) return;
     blink("previous");
     performStep("previous");
   };
 
   const jumpToStepForToken = async (tokenIndex: number) => {
+    if (props.treeFullscreen()) return;
     if (isJumping()) return;
 
     const targetStepIndex = props.steps().reduce((best, step, i) => {
@@ -120,11 +124,13 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
   };
 
   const jumpToFirst = () => {
+    if (props.treeFullscreen()) return;
     if (props.stepIndex() === 0) return;
     goTo(0);
   };
 
   const jumpToLast = () => {
+    if (props.treeFullscreen()) return;
     if (props.stepIndex() >= props.steps().length - 1) return;
     goTo(props.steps().length - 1);
   };
@@ -134,6 +140,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     previousStep,
     jumpToFirst,
     jumpToLast,
+    () => !props.treeFullscreen(),
   );
 
   const cellWidth = 72;

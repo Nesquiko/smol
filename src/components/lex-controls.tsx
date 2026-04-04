@@ -97,6 +97,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     previousStep,
     jumpToFirst,
     jumpToLast,
+    () => true,
   );
 
   const isOverflowing = (): boolean => props.buffer().length > WINDOW_SIZE;

@@ -3,8 +3,11 @@ import DownloadIcon from "lucide-solid/icons/download";
 import EyeIcon from "lucide-solid/icons/eye";
 import EyeOffIcon from "lucide-solid/icons/eye-off";
 import HouseIcon from "lucide-solid/icons/house";
+import InfoIcon from "lucide-solid/icons/info";
+import MaximizeIcon from "lucide-solid/icons/maximize";
+import MinimizeIcon from "lucide-solid/icons/minimize";
 import TargetIcon from "lucide-solid/icons/target";
-import { Accessor, Component, createEffect, createSignal, Setter } from "solid-js";
+import { Accessor, Component, createEffect, createSignal, onCleanup, Setter, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Motion } from "solid-motionone";
 
@@ -331,14 +334,18 @@ interface ParseTreeProps {
   tree: Accessor<ParseTreeNode>;
   active: Accessor<boolean>;
   currentNodeId: Accessor<string | undefined>;
+  fullscreen: Accessor<boolean>;
+  setFullscreen: Setter<boolean>;
   class?: string;
 }
 
 export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   const [centered, setCentered] = createSignal<boolean>(true);
   const [followNode, setFollowNode] = createSignal<boolean>(true);
+  const [showingFullscreenInfo, setShowingFullscreenInfo] = createSignal<boolean>(false);
 
   let svgRef: SVGSVGElement | undefined;
+  let containerRef: HTMLDivElement | undefined;
 
   let zoomBehavior: d3.ZoomBehavior<SVGSVGElement, unknown> | undefined;
 
@@ -391,6 +398,35 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
     svg.transition().duration(500).call(zoomBehavior.transform, transform);
   };
 
+  const toggleFullscreen = async () => {
+    if (!containerRef) return;
+
+    try {
+      if (!props.fullscreen()) {
+        await containerRef.requestFullscreen();
+        props.setFullscreen(true);
+
+        setShowingFullscreenInfo(true);
+        setTimeout(() => setShowingFullscreenInfo(false), 2000);
+      } else {
+        await document.exitFullscreen();
+        props.setFullscreen(false);
+        setShowingFullscreenInfo(false);
+      }
+    } catch (err) {
+      console.log("Fullscreen error: ", err);
+    }
+  };
+
+  createEffect(() => {
+    const handleFullscreenChange = () => {
+      props.setFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    onCleanup(() => document.removeEventListener("fullscreenchange", handleFullscreenChange));
+  });
+
   createEffect(() => {
     const nodeId: string | undefined = props.currentNodeId();
     if (!followNode() || !nodeId) return;
@@ -430,34 +466,12 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
   });
 
   return (
-    <div class="relative h-full w-full">
+    <div ref={containerRef} class="relative h-full w-full bg-primary-900">
       <svg
         ref={svgRef}
         class={cn("min-h-full min-w-full", props.class)}
         style={{ display: "block", cursor: "grab" }}
       />
-
-      <Motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ duration: 0.2 }}
-        class="absolute right-2 bottom-2"
-      >
-        <Tooltip placement="top" openDelay={0} closeDelay={0}>
-          <TooltipTrigger
-            as={Button}
-            variant="ghost"
-            size="icon"
-            class="absolute right-2 bottom-2 size-6 cursor-pointer text-muted-foreground"
-            onClick={() => svgRef && downloadSvg(svgRef)}
-          >
-            <DownloadIcon />
-          </TooltipTrigger>
-
-          <TooltipContent class="text-xs">Download as SVG</TooltipContent>
-        </Tooltip>
-      </Motion.div>
 
       <Motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -472,13 +486,14 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
             variant="ghost"
             size="icon"
             class="size-6 cursor-pointer text-muted-foreground"
-            onClick={resetView}
-            disabled={centered()}
+            onClick={toggleFullscreen}
           >
-            <HouseIcon />
+            <Dynamic component={props.fullscreen() ? MinimizeIcon : MaximizeIcon} />
           </TooltipTrigger>
 
-          <TooltipContent>Jump to root node</TooltipContent>
+          <TooltipContent>
+            {props.fullscreen() ? "Exit fullscreen" : "Enter fullscreen"}
+          </TooltipContent>
         </Tooltip>
       </Motion.div>
 
@@ -487,52 +502,108 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.2 }}
-        class="absolute top-9 right-2"
+        class="absolute right-2 bottom-1"
       >
-        <Tooltip placement="left" openDelay={0} closeDelay={0}>
+        <Tooltip placement="top" openDelay={0} closeDelay={0}>
           <TooltipTrigger
             as={Button}
             variant="ghost"
             size="icon"
             class="size-6 cursor-pointer text-muted-foreground"
-            onClick={() => jumpToNode(props.currentNodeId())}
+            onClick={() => svgRef && downloadSvg(svgRef)}
           >
-            <TargetIcon />
+            <DownloadIcon />
           </TooltipTrigger>
 
-          <TooltipContent>Jump to last processed node</TooltipContent>
+          <TooltipContent class="text-xs">Download as SVG</TooltipContent>
         </Tooltip>
       </Motion.div>
 
-      <Motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ duration: 0.2 }}
-        class="absolute top-16 right-2"
-      >
-        <Tooltip placement="left" openDelay={0} closeDelay={0}>
-          <TooltipTrigger
-            as={Button}
-            variant="ghost"
-            size="icon"
-            class="size-6 cursor-pointer"
-            classList={{
-              "text-muted-foreground bg-primary-700": followNode(),
-              "text-primary-400": !followNode(),
-            }}
-            onClick={() => setFollowNode((v) => !v)}
-          >
-            <Dynamic component={followNode() ? EyeIcon : EyeOffIcon} />
-          </TooltipTrigger>
+      <Show when={!props.fullscreen()}>
+        <Motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+          class="absolute top-9 right-2"
+        >
+          <Tooltip placement="left" openDelay={0} closeDelay={0}>
+            <TooltipTrigger
+              as={Button}
+              variant="ghost"
+              size="icon"
+              class="size-6 cursor-pointer text-muted-foreground"
+              onClick={resetView}
+              disabled={centered()}
+            >
+              <HouseIcon />
+            </TooltipTrigger>
 
-          <TooltipContent>
-            {followNode()
-              ? "Follow last processed node enabled"
-              : "Follow last processed node disabled"}
-          </TooltipContent>
-        </Tooltip>
-      </Motion.div>
+            <TooltipContent>Jump to root node</TooltipContent>
+          </Tooltip>
+        </Motion.div>
+
+        <Motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+          class="absolute top-16 right-2"
+        >
+          <Tooltip placement="left" openDelay={0} closeDelay={0}>
+            <TooltipTrigger
+              as={Button}
+              variant="ghost"
+              size="icon"
+              class="size-6 cursor-pointer text-muted-foreground"
+              onClick={() => jumpToNode(props.currentNodeId())}
+            >
+              <TargetIcon />
+            </TooltipTrigger>
+
+            <TooltipContent>Jump to last processed node</TooltipContent>
+          </Tooltip>
+        </Motion.div>
+
+        <Motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.2 }}
+          class="absolute top-23 right-2"
+        >
+          <Tooltip placement="left" openDelay={0} closeDelay={0}>
+            <TooltipTrigger
+              as={Button}
+              variant="ghost"
+              size="icon"
+              class="size-6 cursor-pointer"
+              classList={{
+                "text-muted-foreground bg-primary-700": followNode(),
+                "text-primary-400": !followNode(),
+              }}
+              onClick={() => setFollowNode((v) => !v)}
+            >
+              <Dynamic component={followNode() ? EyeIcon : EyeOffIcon} />
+            </TooltipTrigger>
+
+            <TooltipContent>
+              {followNode()
+                ? "Follow last processed node enabled"
+                : "Follow last processed node disabled"}
+            </TooltipContent>
+          </Tooltip>
+        </Motion.div>
+      </Show>
+
+      <Show when={showingFullscreenInfo()}>
+        <div class="absolute bottom-6 flex w-full items-center justify-center">
+          <div class="flex w-fit flex-row items-center justify-center gap-2 rounded-md bg-white/5 px-4 py-3">
+            <InfoIcon class="size-6 text-primary-500" />
+            <span class="text-sm text-primary-500">Controls are disabled in fullscreen mode</span>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, Setter } from "solid-js";
+import { Accessor, createEffect, createSignal, onCleanup, Setter } from "solid-js";
 
 import {
   AUTO_MODE_SPEED_MS,
@@ -24,6 +24,7 @@ export const useAutoStep = (
   previousStep: () => void,
   firstStep?: () => void,
   lastStep?: () => void,
+  enabled: Accessor<boolean> = () => true,
 ): UseAutoStepType => {
   const [autoModeDirection, setAutoModeDirection] = createSignal<Direction>("none");
   const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(
@@ -39,7 +40,7 @@ export const useAutoStep = (
 
   createEffect(() => {
     const direction: Direction = autoModeDirection();
-    if (direction === "none") return;
+    if (direction === "none" || !enabled()) return;
 
     const interval: NodeJS.Timeout = setInterval(() => {
       if (direction === "forward") nextStep();

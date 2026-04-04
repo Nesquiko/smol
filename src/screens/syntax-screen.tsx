@@ -37,6 +37,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [logs, setLogs] = createSignal<string[]>([]);
   const [stepIndex, setStepIndex] = createSignal(0);
 
+  const [treeFullscreen, setTreeFullscreen] = createSignal<boolean>(false);
   const [activeTab, setActiveTab] = createSignal<SyntaxTab>("tree");
 
   let stackCardRef: HTMLDivElement | undefined;
@@ -116,6 +117,8 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                   tree={tree}
                   active={() => activeTab() === "tree"}
                   currentNodeId={() => props.steps()[stepIndex()]?.currentNodeId}
+                  fullscreen={treeFullscreen}
+                  setFullscreen={setTreeFullscreen}
                   class="z-20"
                 />
 
@@ -184,6 +187,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
         buffer={buffer}
         setBuffer={setBuffer}
         setTree={setTree}
+        treeFullscreen={treeFullscreen}
         setStack={setStack}
         setLogs={setLogs}
         withNavigation={true}
