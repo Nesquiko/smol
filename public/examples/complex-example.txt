@@ -50,5 +50,7 @@ baz:=bar-1;
 WRITE(foo,bar,baz);
   n10   :=    n9
 +
-n11;
+420;
+bar := baz -    15;
+x := -502;
 END

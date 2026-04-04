@@ -712,10 +712,24 @@ const ComplexExampleTokens: Array<Token> = [
   // Line 52: +
   { type: "PLUS", value: "+", line: 51, colStart: 0, colEnd: 0 },
 
-  // Line 53: n11;
-  { type: "IDENT", value: "n11", line: 52, colStart: 0, colEnd: 2 },
+  // Line 53: 420;
+  { type: "NUMBER", value: "420", line: 52, colStart: 0, colEnd: 2 },
   { type: "SEMI", value: ";", line: 52, colStart: 3, colEnd: 3 },
 
-  // Line 54: END
-  { type: "END", value: "END", line: 53, colStart: 0, colEnd: 2 },
+  // Line: 54: bar := baz -    15;
+  { type: "IDENT", value: "bar", line: 53, colStart: 0, colEnd: 2 },
+  { type: "ASSIGN", value: ":=", line: 53, colStart: 4, colEnd: 5 },
+  { type: "IDENT", value: "baz", line: 53, colStart: 7, colEnd: 9 },
+  { type: "MINUS", value: "-", line: 53, colStart: 11, colEnd: 11 },
+  { type: "NUMBER", value: "15", line: 53, colStart: 16, colEnd: 17 },
+  { type: "SEMI", value: ";", line: 53, colStart: 18, colEnd: 18 },
+
+  // Line 55: x := -502;
+  { type: "IDENT", value: "x", line: 54, colStart: 0, colEnd: 0 },
+  { type: "ASSIGN", value: ":=", line: 54, colStart: 2, colEnd: 3 },
+  { type: "NUMBER", value: "-502", line: 54, colStart: 5, colEnd: 8 },
+  { type: "SEMI", value: ";", line: 54, colStart: 9, colEnd: 9 },
+
+  // Line 56: END
+  { type: "END", value: "END", line: 55, colStart: 0, colEnd: 2 },
 ] satisfies Array<Token>;
