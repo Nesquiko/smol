@@ -180,7 +180,6 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                     ref={logsContainerRef}
                     class="flex h-full w-full flex-col items-start justify-start gap-0 overflow-y-auto rounded-b-lg p-4"
                   >
-                    {logs().toString()}
                     <Show
                       when={logs().length !== 0}
                       fallback={

@@ -49,10 +49,10 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
     <>
       <Button
         onClick={handleOpen}
-        class="relative w-full max-w-full cursor-pointer overflow-hidden bg-primary-700 hover:bg-primary-700/90"
+        class="relative w-full max-w-full cursor-pointer overflow-hidden bg-primary-700 hover:bg-primary-700/90 text-primary-100"
         classList={{
-          "bg-primary-700 hover:bg-primary-700/90": props.fileContent() === undefined,
-          "bg-primary-600 hover:bg-primary-600/90": props.fileContent() !== undefined,
+          "bg-primary-700 hover:bg-primary-700/90 text-primary-100": props.fileContent() === undefined,
+          "bg-primary-500 hover:bg-primary-500/90 text-primary-900": props.fileContent() !== undefined,
         }}
       >
         <span class="min-w-0 flex-1 truncate text-center">
@@ -63,8 +63,8 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
           component={props.fileContent() === undefined ? FileInputIcon : CircleCheckIcon}
           class="absolute top-3 left-3 size-6"
           classList={{
-            "text-primary-300": props.fileContent() !== undefined,
-            "text-primary-500": props.fileContent() === undefined,
+            "text-primary-900": props.fileContent() !== undefined,
+            "text-primary-100": props.fileContent() === undefined,
           }}
         />
       </Button>

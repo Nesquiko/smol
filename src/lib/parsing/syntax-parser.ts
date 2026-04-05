@@ -76,7 +76,6 @@ export class SyntaxParser {
     if (this.resultReported) return;
     this.resultReported = true;
     this.onResult(result);
-    console.log("Reporting result: " + result.toString());
   }
 
   private pushError(message: string, errorMessage: string): void {
