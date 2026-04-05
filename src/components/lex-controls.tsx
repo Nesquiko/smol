@@ -91,11 +91,39 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     if (!text || props.pointer() >= text.length) return;
 
     const currentIndex: number = props.pointer();
+    const tokens = new Array<Token>();
+    const logs = new Array<string>();
+
+    const caret = props.caretPosition();
+
+    let line = caret.line;
+    let linePos = caret.col;
+
     for (let i = currentIndex; i < text.length; i++) {
-      nextStep();
+      if (text[i] === "\n") {
+        line++;
+        linePos = 0;
+        continue;
+      }
+
+      const lexerArgs = { char: text[i], line, linePos };
+      const result = lexer.process(lexerArgs);
+
+      logs.push(...result.logs);
+      if (result.type === "ok") {
+        tokens.push(...result.tokens);
+      } else if (result.type === "error") {
+        // TODO kili result.error has the LexError from lexer.ts, where to put it?
+        console.error("Error during processing of char in jumpToLast", "error", result.error);
+      }
+
+      linePos++;
     }
-    // for the eof
-    nextStep();
+
+    setBuffer([]);
+    props.setPointer(text.length);
+    props.setTokens((prev) => [...prev, ...tokens]);
+    props.setLogs((prev) => [...prev, ...logs]);
   };
 
   const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
