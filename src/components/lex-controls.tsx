@@ -4,12 +4,12 @@ import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
-import { Accessor, Component, createSignal, For, Setter, Show } from "solid-js";
+import { Accessor, batch, Component, createSignal, For, Setter, Show } from "solid-js";
 
 import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { newLexer, ProcessResult } from "~/lib/lexer";
+import { Lexer, newLexer } from "~/lib/lexer";
 import { Caret, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
@@ -28,7 +28,9 @@ interface LexControlsProps {
   class?: string;
 }
 
-const initializeLexer = () => newLexer({ startingLine: 1 });
+const STARTING_LINE = 1;
+
+const initializeLexer = () => newLexer({ startingLine: STARTING_LINE });
 
 export const LexControls: Component<LexControlsProps> = (props) => {
   let lexer = initializeLexer();
@@ -36,49 +38,33 @@ export const LexControls: Component<LexControlsProps> = (props) => {
   const [buffer, setBuffer] = createSignal<Array<string>>([]);
 
   const nextStep = () => {
-    const currentIndex: number = props.pointer();
-    const text: string = props.fileContent();
-
-    const nextChar: string = text[currentIndex];
-    const caret: Caret = props.caretPosition();
-    const lexerArgs = { char: nextChar, line: caret.line, linePos: caret.col };
-
-    let result: ProcessResult;
-    if (!text || currentIndex >= text.length) {
-      result = lexer.eof(lexerArgs);
-    } else {
-      result = lexer.process(lexerArgs);
-
-      blink("next");
-      props.setPointer(currentIndex + 1);
-    }
-
-    props.setLogs((prev) => [...prev, ...result.logs]);
-
-    if (result.type === "ok") {
-      setBuffer([]);
-      props.setTokens((prev) => [...prev, ...result.tokens]);
-    } else if (result.type === "error") {
-      // TODO kili result.error has the LexError from lexer.ts, where to put it?
-      console.error("Error during processing of char", "char", nextChar, "error", result.error);
-    } else {
-      // no tokens emitted, just add to the buffer
-      setBuffer((prev: Array<string>): Array<string> => [...prev, nextChar]);
-    }
+    blink("next");
+    lexText({ moveDelta: 1 });
   };
 
-  const previousStep = () => {
-    // TODO luky, how to revert?
-    if (props.pointer() === 0) return;
-
-    blink("previous");
-
-    setBuffer((prev: Array<string>): Array<string> => prev.slice(0, -1));
-    props.setPointer((p: number): number => Math.max(0, p - 1));
-    props.setLogs((prev: Array<string>): Array<string> => prev.slice(0, -1));
+  const jumpToLast = () => {
+    blink("last");
+    lexText();
   };
 
-  const jumpToFirst = () => {
+  const previousStep = () =>
+    batch(() => {
+      blink("previous");
+      const currentIndex: number = props.pointer();
+      reset();
+
+      // currentIndex was resetted to 0, so adding it -1 as delta will go to
+      // previous index
+      lexText({ moveDelta: currentIndex - 1 });
+    });
+
+  const jumpToFirst = () =>
+    batch(() => {
+      blink("first");
+      reset();
+    });
+
+  const reset = () => {
     setBuffer([]);
     props.setPointer(0);
     props.setLogs([]);
@@ -86,44 +72,40 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     lexer = initializeLexer();
   };
 
-  const jumpToLast = () => {
+  const lexText = (args?: { startFrom?: number; moveDelta?: number }) => {
+    args ??= {};
+
+    const currentIndex: number = args.startFrom ?? props.pointer();
     const text: string = props.fileContent();
-    if (!text || props.pointer() >= text.length) return;
+    const caret: Caret = props.caretPosition();
 
-    const currentIndex: number = props.pointer();
-    const tokens = new Array<Token>();
-    const logs = new Array<string>();
-
-    const caret = props.caretPosition();
-
-    let line = caret.line;
-    let linePos = caret.col;
-
-    for (let i = currentIndex; i < text.length; i++) {
-      if (text[i] === "\n") {
-        line++;
-        linePos = 0;
-        continue;
-      }
-
-      const lexerArgs = { char: text[i], line, linePos };
-      const result = lexer.process(lexerArgs);
-
-      logs.push(...result.logs);
-      if (result.type === "ok") {
-        tokens.push(...result.tokens);
-      } else if (result.type === "error") {
-        // TODO kili result.error has the LexError from lexer.ts, where to put it?
-        console.error("Error during processing of char in jumpToLast", "error", result.error);
-      }
-
-      linePos++;
+    const lexArgs: LexArgs = {
+      text,
+      lexer,
+      startingLine: caret.line,
+      from: currentIndex,
+      linePos: caret.col,
+    };
+    if (args.moveDelta !== undefined) {
+      const moveDelta = Math.max(args.moveDelta, 0);
+      lexArgs.to = Math.min(currentIndex + moveDelta, text.length);
     }
 
-    setBuffer([]);
-    props.setPointer(text.length);
-    props.setTokens((prev) => [...prev, ...tokens]);
+    const { tokens, logs, buffer, error } = lex(lexArgs);
+
+    if (error) {
+      // TODO kili result.error has the LexError from lexer.ts, where to put it?
+      console.error("Error during processing of char", "error", error);
+    }
+
     props.setLogs((prev) => [...prev, ...logs]);
+    if (buffer.length !== 0) {
+      setBuffer((prev) => [...prev, ...buffer]);
+    } else {
+      setBuffer([]);
+    }
+    props.setTokens((prev) => [...prev, ...tokens]);
+    props.setPointer(lexArgs.to ?? text.length);
   };
 
   const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
@@ -284,3 +266,57 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     </div>
   );
 };
+
+interface LexArgs {
+  text: string;
+  lexer: Lexer;
+  from?: number;
+  to?: number;
+  startingLine?: number;
+  linePos?: number;
+}
+
+function lex(args: LexArgs) {
+  const from = Math.max(args.from ?? 0, 0);
+  const to = Math.min(args.to ?? args.text.length, args.text.length);
+
+  let line = args.startingLine ?? 0;
+  let linePos = args.linePos ?? 0;
+  let buffer = new Array<string>();
+  const tokens = new Array<Token>();
+  const logs = new Array<string>();
+
+  for (let i = from; i < to; i++) {
+    const result = args.lexer.process({ char: args.text[i], line, linePos });
+
+    logs.push(...result.logs);
+    if (result.type === "ok") {
+      tokens.push(...result.tokens);
+      buffer = [];
+    } else if (result.type === "error") {
+      return { tokens, logs, buffer, error: result.error };
+    } else {
+      buffer.push(args.text[i]);
+    }
+
+    if (args.text[i] === "\n") {
+      line++;
+      linePos = 0;
+    } else {
+      linePos++;
+    }
+  }
+
+  if (to >= args.text.length) {
+    const result = args.lexer.eof({ line, linePos });
+
+    logs.push(...result.logs);
+    if (result.type === "ok") {
+      tokens.push(...result.tokens);
+    } else if (result.type === "error") {
+      return { tokens, logs, buffer, error: result.error };
+    }
+  }
+
+  return { tokens, logs, buffer };
+}

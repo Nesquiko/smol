@@ -84,7 +84,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
 
         return (
           <div class="flex h-screen w-full flex-col items-center justify-center gap-6 pt-6">
-            <Card class="min-h-0 w-5xl max-w-full flex-1 overflow-hidden">
+            <Card class="min-h-0 w-11/12 max-w-full flex-1 overflow-hidden">
               <Tabs
                 value={activeTab()}
                 onChange={setActiveTab}
@@ -115,7 +115,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                     <div
                       ref={codeContainer}
                       onScroll={handleScroll}
-                      class="w-3/5 overflow-x-auto overflow-y-auto border-r border-border bg-primary-900 font-mono text-sm"
+                      class="w-1/2 overflow-x-auto overflow-y-auto border-r border-border bg-primary-900 font-mono text-sm"
                       style={{ "white-space": "pre" }}
                     >
                       <div class="flex flex-col gap-0 py-3">
@@ -143,7 +143,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                     <div
                       ref={tokensContainer}
                       onScroll={handleScroll}
-                      class="w-2/5 overflow-x-auto overflow-y-auto border-l border-border bg-muted/30"
+                      class="w-1/2 overflow-x-auto overflow-y-auto border-l border-border bg-muted/30"
                     >
                       <div class="flex flex-col gap-0 py-3">
                         <For each={lines()}>
