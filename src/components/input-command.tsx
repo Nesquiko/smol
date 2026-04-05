@@ -49,10 +49,12 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
     <>
       <Button
         onClick={handleOpen}
-        class="relative w-full max-w-full cursor-pointer overflow-hidden bg-primary-700 hover:bg-primary-700/90 text-primary-100"
+        class="relative w-full max-w-full cursor-pointer overflow-hidden bg-primary-700 text-primary-100 hover:bg-primary-700/90"
         classList={{
-          "bg-primary-700 hover:bg-primary-700/90 text-primary-100": props.fileContent() === undefined,
-          "bg-primary-500 hover:bg-primary-500/90 text-primary-900": props.fileContent() !== undefined,
+          "bg-primary-700 hover:bg-primary-700/90 text-primary-100":
+            props.fileContent() === undefined,
+          "bg-primary-500 hover:bg-primary-500/90 text-primary-900":
+            props.fileContent() !== undefined,
         }}
       >
         <span class="min-w-0 flex-1 truncate text-center">
