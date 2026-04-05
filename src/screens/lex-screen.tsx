@@ -1,6 +1,6 @@
 import CodeIcon from "lucide-solid/icons/code";
 import TerminalIcon from "lucide-solid/icons/terminal";
-import { Accessor, Component, createEffect, createSignal, For, Show } from "solid-js";
+import { Accessor, Component, createEffect, createSignal, For, on, Setter, Show } from "solid-js";
 
 import { CodeLine } from "~/components/code-line";
 import { LexControls } from "~/components/lex-controls";
@@ -14,13 +14,13 @@ type LexTab = "code" | "logs";
 interface LexScreenProps {
   fileContent: Accessor<string | undefined>;
   tokens: Accessor<Array<Token>>;
+  setTokens: Setter<Array<Token>>;
   onContinue: () => void;
   onBack: () => void;
 }
 
 export const LexScreen: Component<LexScreenProps> = (props) => {
   const [hoveredToken, setHoveredToken] = createSignal<Token | undefined>(undefined);
-  const [buffer, setBuffer] = createSignal<Array<string>>([]);
   const [pointer, setPointer] = createSignal<number>(0);
   const [logs, setLogs] = createSignal<Array<string>>([]);
   const [activeTab, setActiveTab] = createSignal<LexTab>("code");
@@ -29,12 +29,13 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
   let tokensContainer: HTMLDivElement | undefined;
   let logsContainerRef: HTMLDivElement | undefined;
 
-  createEffect(() => {
-    logs();
-    if (logsContainerRef) {
-      logsContainerRef.scrollTop = logsContainerRef.scrollHeight;
-    }
-  });
+  createEffect(
+    on(logs, () => {
+      if (logsContainerRef) {
+        logsContainerRef.scrollTop = logsContainerRef.scrollHeight;
+      }
+    }),
+  );
 
   const handleScroll = (e: Event) => {
     const target = e.target as HTMLDivElement;
@@ -71,6 +72,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
       {(content: Accessor<string>) => {
         const lines = (): Array<string> => content().split("\n");
         const totalLines = (): number => lines().length;
+
         const tokensByLine = (): Map<number, Array<Token>> => {
           const map = new Map<number, Token[]>();
           props.tokens().forEach((token: Token) => {
@@ -92,7 +94,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                 <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
                   <TabsTrigger
                     value="code"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <CodeIcon class="inline-block size-4 rotate-90" />
@@ -100,7 +102,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <TerminalIcon class="inline-block size-4 rotate-90" />
@@ -121,7 +123,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                           {(line: string, idx: Accessor<number>) => {
                             const lineNum = (): number => idx() + 1;
                             return (
-                              <div class="h-6 flex-shrink-0 px-6 py-0">
+                              <div class="h-6 shrink-0 px-6 py-0">
                                 <CodeLine
                                   line={line}
                                   lineNum={lineNum}
@@ -150,7 +152,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                             const tokensForLine = (): Array<Token> =>
                               tokensByLine().get(lineNum()) ?? [];
                             return (
-                              <div class="flex h-6 flex-shrink-0 items-start gap-1 px-4 py-0">
+                              <div class="flex h-6 shrink-0 items-start gap-1 px-4 py-0">
                                 <For each={tokensForLine()}>
                                   {(token: Token) => (
                                     <Badge
@@ -192,7 +194,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                       <For each={logs()}>
                         {(log: string, index: Accessor<number>) => (
                           <p
-                            class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
+                            class="w-full text-left text-xs leading-tight wrap-break-word whitespace-pre-wrap"
                             classList={{
                               "text-primary-300": log.startsWith("Read"),
                             }}
@@ -214,9 +216,8 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
               fileContent={normalizedContent}
               pointer={pointer}
               setPointer={setPointer}
-              buffer={buffer}
-              setBuffer={setBuffer}
               setLogs={setLogs}
+              setTokens={props.setTokens}
               caretPosition={caretPosition}
               withNavigation={true}
               onBack={props.onBack}

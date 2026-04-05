@@ -1,6 +1,5 @@
 import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
-import { TOKENS_TEST } from "~/lib/data/tokens-test";
 import { SyntaxParser } from "~/lib/parsing/syntax-parser";
 import {
   Screen,
@@ -24,8 +23,7 @@ export const Home = () => {
   const [syntaxErrorMode, setSyntaxErrorMode] = createSignal<SyntaxErrorMode | undefined>(
     undefined,
   );
-  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  const [tokens, setTokens] = createSignal<Array<Token>>(TOKENS_TEST);
+  const [tokens, setTokens] = createSignal<Array<Token>>([]);
   const [result, setResult] = createSignal<Result>("unknown");
 
   const onResult = (res: Result) => {
@@ -61,6 +59,7 @@ export const Home = () => {
             <LexScreen
               fileContent={fileContent}
               tokens={tokens}
+              setTokens={setTokens}
               onContinue={() => setCurrentPage("syntax-config")}
               onBack={() => setCurrentPage("lex-config")}
             />

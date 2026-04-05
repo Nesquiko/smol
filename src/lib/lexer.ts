@@ -5,24 +5,28 @@ interface LexerArgs {
   char: string;
   line: number;
   linePos: number;
-  onTokenEmit: (token: Token) => void;
 }
 
 type IllegalCharError = { stateLabel: string; char: string };
 
 export type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
 
+export type ProcessResult =
+  | { type: "ok"; tokens: Array<Token>; logs: Array<string> }
+  | { type: "error"; error: LexError; logs: Array<string> }
+  | { type: "none"; logs: Array<string> };
+
 const EOF = "EOF";
 
 export interface Lexer {
   /* Advances the state according to the args.char and if in accepting state, then emits a token **/
-  process(args: LexerArgs): LexError | undefined;
+  process(args: LexerArgs): ProcessResult;
   /* Makes one final step in order to finalize potential token, if the final state is accepting, then emits a token  **/
-  eof(args: Omit<LexerArgs, "char">): LexError | undefined;
+  eof(args: Omit<LexerArgs, "char">): ProcessResult;
 }
 
-export function newLexer(): Lexer {
-  return new CorrectLexer();
+export function newLexer(args: { startingLine: number }): Lexer {
+  return new CorrectLexer(args);
 }
 
 interface TokenPosition {
@@ -35,16 +39,26 @@ class CorrectLexer implements Lexer {
   private state: NonAcceptingState;
   private tokenPos: TokenPosition | undefined;
 
-  constructor(state: NonAcceptingState = Q0) {
-    this.state = state;
-    this.tokenPos = { line: 0, tokenStart: 0, tokenEnd: 0 };
+  constructor(args: Partial<{ startingLine: number }>) {
+    this.state = Q0;
+    this.tokenPos = { line: args.startingLine ?? 0, tokenStart: 0, tokenEnd: 0 };
   }
 
-  process(args: LexerArgs): LexError | undefined {
+  process(args: LexerArgs, tokens: Array<Token> = [], logs: Array<string> = []): ProcessResult {
     const result = this.state.move(args.char);
     if (result.type === "error") {
-      return { type: "illegal-char", tokenPos: this.tokenPos, error: result.error };
+      return {
+        type: "error",
+        error: { type: "illegal-char", tokenPos: this.tokenPos, error: result.error },
+        logs: [
+          ...logs,
+          `Error: illegal char '${displayChar(args.char)}' passed to state ${this.state.label} (input ${args.line}:${args.linePos})`,
+        ],
+      };
     }
+    logs.push(
+      `Transition: lexer moved from state ${this.state.label} to ${result.state.label} on char '${displayChar(args.char)}' (input ${args.line}:${args.linePos})`,
+    );
 
     if (isAcceptingState(result.state)) {
       assert(this.tokenPos !== undefined, "token position was undefined", {
@@ -55,25 +69,27 @@ class CorrectLexer implements Lexer {
       // a token needs to receive at one additional char to confirm that it really is that token.
       this.tokenPos.tokenEnd = args.linePos - 1;
       const token = result.state.emit(this.tokenPos);
-      args.onTokenEmit(token);
+      logs.push(`Emit: state ${result.state.label} emitted token ${displayToken(token)}`);
+      tokens.push(token);
 
       // +/- should be treated as `op`, not as start of number after IDENT/NUMBER/RPAREN
       if (
         (args.char === "+" || args.char === "-") &&
         (token.type === "IDENT" || token.type === "NUMBER" || token.type === "RPAREN")
       ) {
+        logs.push(`Emit: '${displayChar(args.char)}' treated like 'op'`);
         if (args.char === "-") {
-          args.onTokenEmit(
+          tokens.push(
             MINUS.emit({ line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos }),
           );
         } else if (args.char === "+") {
-          args.onTokenEmit(
+          tokens.push(
             PLUS.emit({ line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos }),
           );
         }
         this.tokenPos = undefined;
         this.state = Q0;
-        return;
+        return { type: "ok", tokens, logs };
       }
 
       this.tokenPos = undefined;
@@ -81,7 +97,7 @@ class CorrectLexer implements Lexer {
       // a token needs to receive at one additional char to confirm that it really
       // is that token. Instead of making the caller repeat the char, process
       // also the confirming char.
-      return this.process(args);
+      return this.process(args, tokens, logs);
     }
 
     // Q0 can loop on whitespace, which doesn't produce any token, and only
@@ -90,10 +106,14 @@ class CorrectLexer implements Lexer {
       this.tokenPos = { line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos };
     }
     this.state = result.state;
+
+    return tokens.length === 0 ? { type: "none", logs } : { type: "ok", tokens, logs };
   }
 
-  eof(args: Omit<LexerArgs, "char">): LexError | undefined {
-    return this.process({ char: EOF, ...args });
+  eof(args: Omit<LexerArgs, "char">): ProcessResult {
+    const result = this.process({ ...args, char: EOF });
+    result.logs.push(`EOF: finished processing of input`);
+    return result;
   }
 }
 
@@ -546,4 +566,14 @@ function isDigit(char: string): boolean {
 
 function isNumberStart(char: string): boolean {
   return /^[1-9]$/.test(char);
+}
+
+function displayChar(c: string) {
+  if (c === "\n") return "\\n";
+  if (c === "\t") return "\\t";
+  return c;
+}
+
+function displayToken(t: Token) {
+  return JSON.stringify(t);
 }

@@ -4,12 +4,13 @@ import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
-import { Accessor, Component, For, Setter, Show } from "solid-js";
+import { Accessor, Component, createSignal, For, Setter, Show } from "solid-js";
 
 import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { Caret } from "~/lib/types";
+import { newLexer, ProcessResult } from "~/lib/lexer";
+import { Caret, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 const WINDOW_SIZE: number = 11;
@@ -18,9 +19,8 @@ interface LexControlsProps {
   fileContent: Accessor<string>;
   pointer: Accessor<number>;
   setPointer: Setter<number>;
-  buffer: Accessor<Array<string>>;
-  setBuffer: Setter<Array<string>>;
   setLogs: Setter<Array<string>>;
+  setTokens: Setter<Array<Token>>;
   caretPosition: Accessor<Caret>;
   withNavigation: boolean;
   onBack: () => void;
@@ -28,68 +28,74 @@ interface LexControlsProps {
   class?: string;
 }
 
+const initializeLexer = () => newLexer({ startingLine: 1 });
+
 export const LexControls: Component<LexControlsProps> = (props) => {
+  let lexer = initializeLexer();
+
+  const [buffer, setBuffer] = createSignal<Array<string>>([]);
+
   const nextStep = () => {
     const currentIndex: number = props.pointer();
     const text: string = props.fileContent();
-    if (!text || currentIndex >= text.length) return;
-
-    blink("next");
 
     const nextChar: string = text[currentIndex];
     const caret: Caret = props.caretPosition();
-    const display: string = nextChar === "\n" ? "\\n" : nextChar === "\t" ? "\\t" : nextChar;
+    const lexerArgs = { char: nextChar, line: caret.line, linePos: caret.col };
 
-    props.setBuffer((prev: Array<string>): Array<string> => [...prev, nextChar]);
-    props.setPointer(currentIndex + 1);
-    props.setLogs(
-      (prev: Array<string>): Array<string> => [
-        ...prev,
-        `Read: '${display}' at line ${caret.line}, col ${caret.col + 1}`,
-      ],
-    );
+    let result: ProcessResult;
+    if (!text || currentIndex >= text.length) {
+      result = lexer.eof(lexerArgs);
+    } else {
+      result = lexer.process(lexerArgs);
+
+      blink("next");
+      props.setPointer(currentIndex + 1);
+    }
+
+    props.setLogs((prev) => [...prev, ...result.logs]);
+
+    if (result.type === "ok") {
+      setBuffer([]);
+      props.setTokens((prev) => [...prev, ...result.tokens]);
+    } else if (result.type === "error") {
+      // TODO kili result.error has the LexError from lexer.ts, where to put it?
+      console.error("Error during processing of char", "char", nextChar, "error", result.error);
+    } else {
+      // no tokens emitted, just add to the buffer
+      setBuffer((prev: Array<string>): Array<string> => [...prev, nextChar]);
+    }
   };
 
   const previousStep = () => {
+    // TODO luky, how to revert?
     if (props.pointer() === 0) return;
 
     blink("previous");
 
-    props.setBuffer((prev: Array<string>): Array<string> => prev.slice(0, -1));
+    setBuffer((prev: Array<string>): Array<string> => prev.slice(0, -1));
     props.setPointer((p: number): number => Math.max(0, p - 1));
     props.setLogs((prev: Array<string>): Array<string> => prev.slice(0, -1));
   };
 
   const jumpToFirst = () => {
-    if (props.pointer() === 0) return;
-    props.setBuffer([]);
+    setBuffer([]);
     props.setPointer(0);
     props.setLogs([]);
+    props.setTokens([]);
+    lexer = initializeLexer();
   };
 
   const jumpToLast = () => {
     const text: string = props.fileContent();
     if (!text || props.pointer() >= text.length) return;
 
-    const chars: Array<string> = text.split("");
-    props.setBuffer(chars);
-    props.setPointer(text.length);
-    props.setLogs(
-      chars.map((ch: string, i: number): string => {
-        let line: number = 1;
-        let col: number = 0;
-        for (let j: number = 0; j < i; j++) {
-          if (chars[j] === "\n") {
-            line++;
-            col = 0;
-          } else {
-            col++;
-          }
-        }
-        const display: string = ch === "\n" ? "\\n" : ch === "\t" ? "\\t" : ch;
-        return `Read: '${display}' at line ${line}, col ${col + 1}`;
-      }),
-    );
+    const currentIndex: number = props.pointer();
+    for (let i = currentIndex; i < text.length; i++) {
+      nextStep();
+    }
+    // for the eof
+    nextStep();
   };
 
   const { autoModeDirection, setAutoModeDirection, lastPressedButton, blink } = useAutoStep(
@@ -100,10 +106,10 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     () => true,
   );
 
-  const isOverflowing = (): boolean => props.buffer().length > WINDOW_SIZE;
+  const isOverflowing = (): boolean => buffer().length > WINDOW_SIZE;
 
   const visibleBuffer = (): Array<string> => {
-    const buf: Array<string> = props.buffer();
+    const buf: Array<string> = buffer();
     if (buf.length <= WINDOW_SIZE) {
       return [...buf, ...Array(WINDOW_SIZE - buf.length).fill("")];
     }
@@ -118,14 +124,13 @@ export const LexControls: Component<LexControlsProps> = (props) => {
       <div class="relative flex w-full justify-center">
         <div class="relative flex h-10 flex-row gap-2">
           <Show when={isOverflowing()}>
-            <div class="pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-gradient-to-r from-background to-transparent" />
+            <div class="pointer-events-none absolute top-0 left-0 z-10 h-full w-12 bg-linear-to-r from-background to-transparent" />
           </Show>
 
           <For each={visibleBuffer()}>
             {(char: string, i: Accessor<number>) => {
               const isCurrent = (): boolean =>
-                props.buffer().length > 0 &&
-                i() === Math.min(props.buffer().length - 1, WINDOW_SIZE - 1);
+                buffer().length > 0 && i() === Math.min(buffer().length - 1, WINDOW_SIZE - 1);
 
               return (
                 <div

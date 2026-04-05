@@ -25,11 +25,11 @@ export const CodeLine: Component<CodeLineProps> = (props: CodeLineProps) => {
     const result = chars.map((char, i) => {
       const isCaret = props.caret().line === props.lineNum() && props.caret().col === i;
 
-      const token = tokens.find((t) => i >= t.colStart && i < t.colEnd);
+      const token = tokens.find((t) => i >= t.colStart && i <= t.colEnd);
 
       const isInToken = !!token;
       const isStart = token && i === token.colStart;
-      const isEnd = token && i === token.colEnd - 1;
+      const isEnd = token && i === token.colEnd;
 
       return (
         <span
