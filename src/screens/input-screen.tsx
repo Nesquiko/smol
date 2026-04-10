@@ -15,7 +15,11 @@ export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps
   return (
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center">
       <div class="flex w-full max-w-md items-center justify-center">
-        <InputCommand fileContent={props.fileContent} setFileContent={props.setFileContent} />
+        <InputCommand
+          fileContent={props.fileContent}
+          setFileContent={props.setFileContent}
+          onContinue={props.onContinue}
+        />
       </div>
 
       <div class="absolute right-0 bottom-0 p-6">

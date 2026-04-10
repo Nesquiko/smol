@@ -14,19 +14,19 @@ import { ErrorModeData, SyntaxErrorMode } from "~/lib/types";
 
 const SYNTAX_ERROR_MODES: Array<ErrorModeData> = [
   {
-    mode: "syntax-no-errors",
+    mode: "no-errors",
     title: "No auto-fix",
     description: "This mode will not fix any errors for you automatically.",
     icon: ShieldOffIcon,
   } satisfies ErrorModeData,
   {
-    mode: "syntax-error-1",
+    mode: "ignore-until-found",
     title: "Auto-fix error 1",
     description: "This mode will fix error no. 1 for you automatically.",
     icon: ShieldIcon,
   } satisfies ErrorModeData,
   {
-    mode: "syntax-error-2",
+    mode: "add-missing",
     title: "Auto-fix error 2",
     description: "This mode will fix error no. 2 for you automatically.",
     icon: ShieldIcon,

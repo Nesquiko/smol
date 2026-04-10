@@ -4,13 +4,22 @@ import MoveIcon from "lucide-solid/icons/move";
 import TerminalIcon from "lucide-solid/icons/terminal";
 import { Accessor, Component, createEffect, createSignal, For, Show } from "solid-js";
 
+import { NoData } from "~/components/no-data";
 import { ParseTree } from "~/components/parse-tree";
 import { Stack } from "~/components/stack";
 import { SyntaxControls } from "~/components/syntax-controls";
 import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { BufferType, SyntaxParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
+import {
+  BufferType,
+  SyntaxParserStep,
+  ParseTreeNode,
+  StackType,
+  Token,
+  SyntaxLog,
+} from "~/lib/types";
+import { formatLog } from "~/lib/ui-utils";
 
 const INITIAL_TREE: ParseTreeNode = {
   id: "-1",
@@ -34,7 +43,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
   const [tree, setTree] = createSignal<ParseTreeNode>(INITIAL_TREE);
   const [stack, setStack] = createSignal<StackType>([]);
   const [flyingTokens, setFlyingTokens] = createSignal<Array<FlyingToken>>([]);
-  const [logs, setLogs] = createSignal<string[]>([]);
+  const [logs, setLogs] = createSignal<Array<SyntaxLog>>([]);
   const [stepIndex, setStepIndex] = createSignal(0);
 
   const [treeFullscreen, setTreeFullscreen] = createSignal<boolean>(false);
@@ -117,6 +126,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                   tree={tree}
                   active={() => activeTab() === "tree"}
                   currentNodeId={() => props.steps()[stepIndex()]?.currentNodeId}
+                  error={() => props.steps()[stepIndex()]?.error}
                   fullscreen={treeFullscreen}
                   setFullscreen={setTreeFullscreen}
                   class="z-20"
@@ -145,28 +155,24 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
               >
                 <Show
                   when={logs().length !== 0}
-                  fallback={
-                    <div class="flex h-full w-full flex-1 flex-col items-center justify-center">
-                      <TerminalIcon class="size-24 text-primary-700" />
-                      <span class="text-sm font-medium text-primary-600">No logs yet</span>
-                    </div>
-                  }
+                  fallback={<NoData icon={TerminalIcon} text="No logs yet" />}
                 >
                   <For each={logs()}>
-                    {(log: string, index: Accessor<number>) => (
+                    {(log: SyntaxLog, index: Accessor<number>) => (
                       <p
                         class="w-full text-left text-xs leading-tight break-words whitespace-pre-wrap"
                         classList={{
-                          "text-green-300 font-bold": log.startsWith("[Accept]"),
-                          "text-red-300": log.startsWith("[Error]"),
-                          "text-primary-300": log.startsWith("[Match]"),
-                          "text-primary-400": log.startsWith("[Expand]"),
+                          "text-foreground": log.type === "init",
+                          "text-primary-400": log.type === "expand",
+                          "text-primary-300": log.type === "match",
+                          "text-red-400": log.type === "error",
+                          "text-green-300 font-bold": log.type === "accept",
                         }}
                       >
                         <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">
                           {String(index() + 1).padStart(padWidth(), " ")}
                         </span>
-                        {log}
+                        {formatLog(log)}
                       </p>
                     )}
                   </For>

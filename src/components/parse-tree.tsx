@@ -20,6 +20,7 @@ import {
   NodeType,
   NonTerminal,
   ParseTreeNode,
+  SyntaxErrorOccurrence,
   Token,
   TokenType,
 } from "~/lib/types";
@@ -73,6 +74,17 @@ const getNodeColor = (node: ParseTreeNode): string => {
   return NODE_COLORS[getNodeType(node.data)];
 };
 
+const getNodeStrokeColor = (
+  d: d3.HierarchyPointNode<ParseTreeNode>,
+  error: Accessor<SyntaxErrorOccurrence | undefined>,
+  currentNodeId: Accessor<string | undefined>,
+): string => {
+  if (error()?.nodeId === d.data.id) return "#FF6060";
+  if (currentNodeId() === d.data.id) return "#FFEE8C";
+  if (d.depth === 0) return "var(--color-neutral-100)";
+  return "none";
+};
+
 const getOrCreateTooltip = (): d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> => {
   const existing = d3.select("body").select<HTMLDivElement>(`.${TOOLTIP_CLASS}`);
   if (!existing.empty()) return existing;
@@ -84,7 +96,7 @@ const getOrCreateTooltip = (): d3.Selection<HTMLDivElement, unknown, HTMLElement
     .style("position", "fixed")
     .style("pointer-events", "none")
     .style("background", "#111")
-    .style("color", "#fff")
+    .style("color", "#FFF")
     .style("padding", "6px 10px")
     .style("border-radius", "6px")
     .style("font-size", "12px")
@@ -95,23 +107,36 @@ const getOrCreateTooltip = (): d3.Selection<HTMLDivElement, unknown, HTMLElement
 const applyTooltip = (
   selection: d3.Selection<SVGGElement, d3.HierarchyPointNode<ParseTreeNode>, SVGGElement, unknown>,
   tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
+  error: Accessor<SyntaxErrorOccurrence | undefined>,
 ) => {
   selection
     .on("mouseenter", (_event, d) => {
       const nodeData: Token | NonTerminal | TokenType = d.data.data;
       if (!nodeData) return;
 
+      const isError = () => error() && error()?.nodeId === d.data.id;
+      const errorDiv: string = isError()
+        ? `<div style="color: #FF6060">${error()?.message}</div>`
+        : "";
+
       if (typeof nodeData === "string") {
-        tooltip
-          .style("opacity", 1)
-          .html(`<div><strong>${nodeData}</strong></div><div>Non-terminal</div>`);
+        const tooltipHtml: string = `
+          <div><strong>${nodeData}</strong></div>
+          <div>Non-terminal</div>
+          ${errorDiv}
+        `;
+
+        tooltip.style("opacity", 1).html(tooltipHtml);
       } else if ("value" in nodeData) {
-        tooltip.style("opacity", 1).html(`
+        const tooltipHtml: string = `
           <div><strong>${nodeData.type}</strong></div>
           <div>Value: ${nodeData.value}</div>
           <div>Line: ${nodeData.line}</div>
           <div>Cols: ${nodeData.colStart}-${nodeData.colEnd}</div>
-        `);
+          ${errorDiv}
+        `;
+
+        tooltip.style("opacity", 1).html(tooltipHtml);
       }
     })
     .on("mousemove", (event) =>
@@ -237,6 +262,7 @@ const renderNodes = (
   root: d3.HierarchyPointNode<ParseTreeNode>,
   tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
   currentNodeId: Accessor<string | undefined>,
+  error: Accessor<SyntaxErrorOccurrence | undefined>,
 ) => {
   const nodes: d3.Selection<
     SVGGElement,
@@ -258,20 +284,14 @@ const renderNodes = (
     .attr("class", "node")
     .attr("transform", (d) => `translate(${d.x},${d.y})`);
 
-  applyTooltip(nodeEnter, tooltip);
-  applyTooltip(nodes, tooltip);
+  applyTooltip(nodeEnter, tooltip, error);
+  applyTooltip(nodes, tooltip, error);
 
   nodeEnter
     .append("circle")
     .attr("r", 0)
     .style("fill", (d) => getNodeColor(d.data))
-    .style("stroke", (d) =>
-      currentNodeId() === d.data.id
-        ? "#FFEE8C"
-        : d.depth === 0
-          ? "var(--color-neutral-100)"
-          : "none",
-    )
+    .style("stroke", (d) => getNodeStrokeColor(d, error, currentNodeId))
     .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0))
     .transition()
     .duration(TRANSITION_MS)
@@ -308,13 +328,7 @@ const renderNodes = (
   nodes
     .select("circle")
     .style("fill", (d) => getNodeColor(d.data))
-    .style("stroke", (d) =>
-      currentNodeId() === d.data.id
-        ? "#FFEE8C"
-        : d.depth === 0
-          ? "var(--color-neutral-100)"
-          : "none",
-    )
+    .style("stroke", (d) => getNodeStrokeColor(d, error, currentNodeId))
     .style("stroke-width", (d) => (currentNodeId() === d.data.id ? 3 : d.depth === 0 ? 3 : 0));
 
   nodes
@@ -334,6 +348,7 @@ interface ParseTreeProps {
   tree: Accessor<ParseTreeNode>;
   active: Accessor<boolean>;
   currentNodeId: Accessor<string | undefined>;
+  error: Accessor<SyntaxErrorOccurrence | undefined>;
   fullscreen: Accessor<boolean>;
   setFullscreen: Setter<boolean>;
   class?: string;
@@ -460,7 +475,7 @@ export const ParseTree: Component<ParseTreeProps> = (props: ParseTreeProps) => {
       getOrCreateTooltip();
 
     renderLinks(g, root);
-    renderNodes(g, root, tooltip, props.currentNodeId);
+    renderNodes(g, root, tooltip, props.currentNodeId, props.error);
 
     adjustZIndex(g);
   });

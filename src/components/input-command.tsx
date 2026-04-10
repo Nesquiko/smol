@@ -23,6 +23,7 @@ import { FILE_EXAMPLES, InputExample } from "~/lib/data/file-examples";
 interface InputCommandProps {
   fileContent: Accessor<string | undefined>;
   setFileContent: Setter<string | undefined>;
+  onContinue: () => void;
 }
 
 export const InputCommand: Component<InputCommandProps> = (props: InputCommandProps) => {
@@ -43,6 +44,7 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
     const text: string = await response.text();
 
     props.setFileContent(text);
+    props.onContinue();
   };
 
   return (

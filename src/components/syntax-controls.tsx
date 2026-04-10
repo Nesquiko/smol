@@ -20,7 +20,14 @@ import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { BufferType, SyntaxParserStep, ParseTreeNode, StackType, Token } from "~/lib/types";
+import {
+  BufferType,
+  SyntaxParserStep,
+  ParseTreeNode,
+  StackType,
+  Token,
+  SyntaxLog,
+} from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 interface SyntaxControlsProps {
@@ -32,7 +39,7 @@ interface SyntaxControlsProps {
   setBuffer: Setter<BufferType>;
   setTree: Setter<ParseTreeNode>;
   setStack: Setter<StackType>;
-  setLogs: Setter<string[]>;
+  setLogs: Setter<Array<SyntaxLog>>;
   withNavigation: boolean;
   onBack: () => void;
   onContinue: () => void;
@@ -140,6 +147,7 @@ export const SyntaxControls: Component<SyntaxControlsProps> = (props) => {
     previousStep,
     jumpToFirst,
     jumpToLast,
+    () => !props.treeFullscreen(),
     () => !props.treeFullscreen(),
   );
 

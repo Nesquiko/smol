@@ -1,5 +1,5 @@
 import { assert } from "~/lib/assert";
-import { Token, TokenType } from "~/lib/types";
+import { LexLog, Token, TokenType } from "~/lib/types";
 
 interface LexerArgs {
   char: string;
@@ -12,9 +12,9 @@ type IllegalCharError = { stateLabel: string; char: string };
 export type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
 
 export type ProcessResult =
-  | { type: "ok"; tokens: Array<Token>; logs: Array<string> }
-  | { type: "error"; error: LexError; logs: Array<string> }
-  | { type: "none"; logs: Array<string> };
+  | { type: "ok"; tokens: Array<Token>; logs: Array<LexLog> }
+  | { type: "error"; error: LexError; logs: Array<LexLog> }
+  | { type: "none"; logs: Array<LexLog> };
 
 const EOF = "EOF";
 
@@ -25,8 +25,16 @@ export interface Lexer {
   eof(args: Omit<LexerArgs, "char">): ProcessResult;
 }
 
-export function newLexer(args: { startingLine: number }): Lexer {
-  return new CorrectLexer(args);
+export function newLexer(args: { startingLine: number }): { lexer: Lexer; log: LexLog } {
+  const lexer = new CorrectLexer(args);
+  const log: LexLog = {
+    type: "init",
+    message: "q0 - Lexer initialized",
+  };
+  return {
+    lexer,
+    log,
+  };
 }
 
 interface TokenPosition {
@@ -44,7 +52,7 @@ class CorrectLexer implements Lexer {
     this.tokenPos = { line: args.startingLine ?? 0, tokenStart: 0, tokenEnd: 0 };
   }
 
-  process(args: LexerArgs, tokens: Array<Token> = [], logs: Array<string> = []): ProcessResult {
+  process(args: LexerArgs, tokens: Array<Token> = [], logs: Array<LexLog> = []): ProcessResult {
     const result = this.state.move(args.char);
     if (result.type === "error") {
       return {
@@ -52,13 +60,17 @@ class CorrectLexer implements Lexer {
         error: { type: "illegal-char", tokenPos: this.tokenPos, error: result.error },
         logs: [
           ...logs,
-          `Error: illegal char '${displayChar(args.char)}' passed to state ${this.state.label} (input ${args.line}:${args.linePos})`,
+          {
+            type: "error",
+            message: `Illegal character '${displayChar(args.char)}' passed to state ${this.state.label} (input ${args.line}:${args.linePos})`,
+          },
         ],
       };
     }
-    logs.push(
-      `Transition: lexer moved from state ${this.state.label} to ${result.state.label} on char '${displayChar(args.char)}' (input ${args.line}:${args.linePos})`,
-    );
+    logs.push({
+      type: "transition",
+      message: `Lexer moved from state ${this.state.label} to ${result.state.label} on char '${displayChar(args.char)}' (input ${args.line}:${args.linePos})`,
+    });
 
     if (isAcceptingState(result.state)) {
       assert(this.tokenPos !== undefined, "token position was undefined", {
@@ -69,7 +81,10 @@ class CorrectLexer implements Lexer {
       // a token needs to receive at one additional char to confirm that it really is that token.
       this.tokenPos.tokenEnd = args.linePos - 1;
       const token = result.state.emit(this.tokenPos);
-      logs.push(`Emit: state ${result.state.label} emitted token ${displayToken(token)}`);
+      logs.push({
+        type: "emit",
+        message: `State ${result.state.label} emitted token ${displayToken(token)}`,
+      });
       tokens.push(token);
 
       // +/- should be treated as `op`, not as start of number after IDENT/NUMBER/RPAREN
@@ -77,7 +92,10 @@ class CorrectLexer implements Lexer {
         (args.char === "+" || args.char === "-") &&
         (token.type === "IDENT" || token.type === "NUMBER" || token.type === "RPAREN")
       ) {
-        logs.push(`Emit: '${displayChar(args.char)}' treated like 'op'`);
+        logs.push({
+          type: "emit",
+          message: `Emit: '${displayChar(args.char)}' treated like 'op'`,
+        });
         if (args.char === "-") {
           tokens.push(
             MINUS.emit({ line: args.line, tokenStart: args.linePos, tokenEnd: args.linePos }),
@@ -112,7 +130,10 @@ class CorrectLexer implements Lexer {
 
   eof(args: Omit<LexerArgs, "char">): ProcessResult {
     const result = this.process({ ...args, char: EOF });
-    result.logs.push(`EOF: finished processing of input`);
+    result.logs.push({
+      type: "eof",
+      message: "Finished processing of input",
+    });
     return result;
   }
 }

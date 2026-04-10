@@ -25,6 +25,7 @@ export const useAutoStep = (
   firstStep?: () => void,
   lastStep?: () => void,
   enabled: Accessor<boolean> = () => true,
+  autoModeEnabled: Accessor<boolean> = () => true,
 ): UseAutoStepType => {
   const [autoModeDirection, setAutoModeDirection] = createSignal<Direction>("none");
   const [lastPressedButton, setLastPressedButton] = createSignal<ControlButton | undefined>(
@@ -40,7 +41,7 @@ export const useAutoStep = (
 
   createEffect(() => {
     const direction: Direction = autoModeDirection();
-    if (direction === "none" || !enabled()) return;
+    if (direction === "none" || !enabled() || !autoModeEnabled()) return;
 
     const interval: NodeJS.Timeout = setInterval(() => {
       if (direction === "forward") nextStep();

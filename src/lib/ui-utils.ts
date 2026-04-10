@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { LexLog, LexLogType, SyntaxLog, SyntaxLogType } from "~/lib/types";
+
 export const cn = (...inputs: Array<ClassValue>): string => {
   return twMerge(clsx(inputs));
 };
@@ -49,3 +51,7 @@ export const downloadSvg = (ref: SVGSVGElement) => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+export const formatLogType = (type: LexLogType | SyntaxLogType) => `[${type.toUpperCase()}]`;
+
+export const formatLog = (log: LexLog | SyntaxLog) => `${formatLogType(log.type)} ${log.message}`;

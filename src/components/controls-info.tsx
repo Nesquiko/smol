@@ -1,46 +1,55 @@
-import ArrowDownIcon from "lucide-solid/icons/arrow-down";
-import ArrowLeftIcon from "lucide-solid/icons/arrow-left";
-import ArrowRightIcon from "lucide-solid/icons/arrow-right";
-import ArrowUpIcon from "lucide-solid/icons/arrow-up";
-import ChevronFirstIcon from "lucide-solid/icons/chevron-first";
-import ChevronLastIcon from "lucide-solid/icons/chevron-last";
+import type { LucideIcon } from "lucide-solid";
+
+import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
+import ChevronRightIcon from "lucide-solid/icons/chevron-right";
+import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
+import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import InfoIcon from "lucide-solid/icons/info";
+import PlayIcon from "lucide-solid/icons/play";
 import { For } from "solid-js";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 
-const INFO = [
+type InfoItem = {
+  icon: LucideIcon;
+  text: string;
+  keys: Array<string>;
+  reverse?: boolean;
+};
+
+const INFO: Array<InfoItem> = [
   {
-    icon: ArrowUpIcon,
+    icon: PlayIcon,
     text: "Auto Forward/Stop",
-    key: "Arrow Up",
+    keys: ["Space", "Arrow Up"],
   },
   {
-    icon: ArrowDownIcon,
+    icon: PlayIcon,
     text: "Auto Backward/Stop",
-    key: "Arrow Down",
+    keys: ["Arrow Down"],
+    reverse: true,
   },
   {
-    icon: ArrowRightIcon,
+    icon: ChevronRightIcon,
     text: "Step Forward",
-    key: "Arrow Right",
+    keys: ["Arrow Right"],
   },
   {
-    icon: ArrowLeftIcon,
+    icon: ChevronLeftIcon,
     text: "Step Backward",
-    key: "Arrow Left",
+    keys: ["Arrow Left"],
   },
   {
-    icon: ChevronFirstIcon,
+    icon: ChevronsRightIcon,
     text: "First Step",
-    key: "F",
+    keys: ["F"],
   },
   {
-    icon: ChevronLastIcon,
+    icon: ChevronsLeftIcon,
     text: "Last Step",
-    key: "L",
+    keys: ["L"],
   },
-];
+] as const satisfies Array<InfoItem>;
 
 export const ControlsInfo = () => {
   return (
@@ -53,13 +62,22 @@ export const ControlsInfo = () => {
           {(infoItem) => (
             <>
               <span class="px-1.5 py-0.5">
-                <infoItem.icon class="mr-1 mb-[1px] inline-block size-4" />
+                <infoItem.icon
+                  class="mr-1 mb-[1px] inline-block size-4"
+                  classList={{
+                    "rotate-180": infoItem.reverse,
+                  }}
+                />
                 {infoItem.text}
               </span>
-              <div class="flex w-full items-center justify-end">
-                <span class="w-fit rounded-md bg-primary-700 px-2 py-0.5 text-xs text-primary-300">
-                  {infoItem.key}
-                </span>
+              <div class="flex w-full items-center justify-end gap-1">
+                <For each={infoItem.keys}>
+                  {(key: string) => (
+                    <span class="w-fit rounded-md bg-primary-700 px-2 py-0.5 text-xs text-primary-300">
+                      {key}
+                    </span>
+                  )}
+                </For>
               </div>
             </>
           )}

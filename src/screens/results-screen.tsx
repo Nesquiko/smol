@@ -3,29 +3,12 @@ import type { Chart, ChartData, ChartOptions } from "chart.js";
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import { Accessor, Component, createMemo, For } from "solid-js";
 
+import { ResultStatCard } from "~/components/result-stat-card";
 import { BarList } from "~/components/ui/bar-list";
 import { Button } from "~/components/ui/button";
 import { DonutChart } from "~/components/ui/charts";
 import { computeLexStats, computeSyntaxStats, LexStats, SyntaxStats } from "~/lib/parsing/stats";
 import { SyntaxParserStep, Result, Token } from "~/lib/types";
-
-interface StatCardProps {
-  label: string;
-  value: string | number;
-  dim?: boolean;
-}
-
-const StatCard: Component<StatCardProps> = (props) => (
-  <div class="flex flex-col items-start justify-between gap-1 rounded-lg bg-primary-900 p-4">
-    <span class="text-xs font-medium text-muted-foreground/60">{props.label}</span>
-    <span
-      class="font-mono text-2xl font-bold"
-      classList={{ "text-primary-300": !props.dim, "text-muted-foreground": props.dim }}
-    >
-      {props.value}
-    </span>
-  </div>
-);
 
 interface ResultsScreenProps {
   result: Accessor<Result>;
@@ -91,21 +74,21 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
       const { ctx, chartArea } = chart;
       if (!chartArea) return;
 
-      const total = synStats().totalSteps;
+      const total: number = synStats().totalSteps;
 
-      const cx = (chartArea.left + chartArea.right) / 2;
-      const cy = (chartArea.top + chartArea.bottom) / 2;
+      const cx: number = (chartArea.left + chartArea.right) / 2;
+      const cy: number = (chartArea.top + chartArea.bottom) / 2;
 
       ctx.save();
 
-      ctx.font = "bold 28px monospace";
+      ctx.font = "bold 32px monospace";
       ctx.fillStyle = "#e2e8f0";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(total), cx, cy - 10);
 
-      ctx.font = "11px sans-serif";
-      ctx.fillText("total steps", cx, cy + 14);
+      ctx.font = "10px sans-serif";
+      ctx.fillText("total steps", cx, cy + 16);
 
       ctx.restore();
     },
@@ -130,7 +113,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
           classList={{
             "text-primary-300": props.result() === "unknown",
             "text-green-300": props.result() === "correct",
-            "text-red-300": props.result() === "incorrect",
+            "text-red-400": props.result() === "incorrect",
           }}
         >
           {props.result()}
@@ -145,7 +128,9 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
           </h2>
           <div class="flex w-full flex-col items-start justify-center gap-3 sm:flex-row">
             <div class="grid w-full grid-cols-3 gap-3 sm:grid-cols-1">
-              <For each={lexStatItems()}>{(s) => <StatCard label={s.label} value={s.value} />}</For>
+              <For each={lexStatItems()}>
+                {(s) => <ResultStatCard label={s.label} value={s.value} />}
+              </For>
             </div>
 
             <div class="h-full w-full rounded-lg bg-primary-900 p-[17px]">
@@ -164,7 +149,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
           <div class="flex w-full flex-col items-center justify-center gap-3 md:flex-row">
             <div class="grid w-full grid-cols-2 gap-3">
               <For each={synStatItems()}>
-                {(s) => <StatCard label={s.label} value={s.value} dim={s.dim} />}
+                {(s) => <ResultStatCard label={s.label} value={s.value} dim={s.dim} />}
               </For>
             </div>
 

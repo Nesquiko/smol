@@ -24,4 +24,11 @@ export const FILE_EXAMPLES: Array<InputExample> = [
     characterCount: 849,
     path: "/examples/complex-example.txt",
   } satisfies InputExample,
+  {
+    id: "example-2",
+    name: "Complex Example 2",
+    lineCount: 55,
+    characterCount: 849,
+    path: "/examples/complex-example-2.txt",
+  } satisfies InputExample,
 ] satisfies Array<InputExample>;

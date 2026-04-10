@@ -4,13 +4,23 @@ import ChevronsLeftIcon from "lucide-solid/icons/chevrons-left";
 import ChevronsRightIcon from "lucide-solid/icons/chevrons-right";
 import PauseIcon from "lucide-solid/icons/pause";
 import PlayIcon from "lucide-solid/icons/play";
-import { Accessor, batch, Component, createSignal, For, Setter, Show } from "solid-js";
+import {
+  Accessor,
+  batch,
+  Component,
+  createEffect,
+  createSignal,
+  For,
+  Setter,
+  Show,
+} from "solid-js";
 
 import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { Lexer, newLexer } from "~/lib/lexer";
-import { Caret, Token } from "~/lib/types";
+import { Lexer, LexError, newLexer } from "~/lib/lexer";
+import { Caret, LexLog, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 const WINDOW_SIZE: number = 11;
@@ -19,9 +29,11 @@ interface LexControlsProps {
   fileContent: Accessor<string>;
   pointer: Accessor<number>;
   setPointer: Setter<number>;
-  setLogs: Setter<Array<string>>;
+  setLogs: Setter<Array<LexLog>>;
   setTokens: Setter<Array<Token>>;
   caretPosition: Accessor<Caret>;
+  error: Accessor<LexError | undefined>;
+  setError: Setter<LexError | undefined>;
   withNavigation: boolean;
   onBack: () => void;
   onContinue: () => void;
@@ -30,19 +42,31 @@ interface LexControlsProps {
 
 const STARTING_LINE = 1;
 
-const initializeLexer = () => newLexer({ startingLine: STARTING_LINE });
-
 export const LexControls: Component<LexControlsProps> = (props) => {
-  let lexer = initializeLexer();
+  let lexer: Lexer | undefined = undefined;
+
+  const initializeLexer = () => {
+    const { lexer, log } = newLexer({ startingLine: STARTING_LINE });
+    props.setLogs([log]);
+    return lexer;
+  };
+
+  createEffect(() => {
+    lexer = initializeLexer();
+  });
 
   const [buffer, setBuffer] = createSignal<Array<string>>([]);
 
   const nextStep = () => {
+    if (props.error()) return;
+
     blink("next");
     lexText({ moveDelta: 1 });
   };
 
   const jumpToLast = () => {
+    if (props.error()) return;
+
     blink("last");
     lexText();
   };
@@ -53,7 +77,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
       const currentIndex: number = props.pointer();
       reset();
 
-      // currentIndex was resetted to 0, so adding it -1 as delta will go to
+      // currentIndex was reset to 0, so adding it -1 as delta will go to
       // previous index
       lexText({ moveDelta: currentIndex - 1 });
     });
@@ -69,6 +93,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     props.setPointer(0);
     props.setLogs([]);
     props.setTokens([]);
+    props.setError(undefined);
     lexer = initializeLexer();
   };
 
@@ -79,6 +104,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     const text: string = props.fileContent();
     const caret: Caret = props.caretPosition();
 
+    if (!lexer) return;
     const lexArgs: LexArgs = {
       text,
       lexer,
@@ -94,8 +120,9 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     const { tokens, logs, buffer, error } = lex(lexArgs);
 
     if (error) {
-      // TODO kili result.error has the LexError from lexer.ts, where to put it?
-      console.error("Error during processing of char", "error", error);
+      props.setError(error);
+    } else {
+      props.setError(undefined);
     }
 
     props.setLogs((prev) => [...prev, ...logs]);
@@ -114,6 +141,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
     jumpToFirst,
     jumpToLast,
     () => true,
+    () => !props.error(),
   );
 
   const isOverflowing = (): boolean => buffer().length > WINDOW_SIZE;
@@ -226,7 +254,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
               "opacity-50 scale-95": lastPressedButton() === "next",
             }}
             onClick={nextStep}
-            disabled={atEnd()}
+            disabled={atEnd() || !!props.error()}
           >
             <ChevronRightIcon class="text-primary-900" />
           </Button>
@@ -240,7 +268,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
                 "opacity-50 scale-95": lastPressedButton() === "last",
               }}
               onClick={jumpToLast}
-              disabled={atEnd()}
+              disabled={atEnd() || !!props.error()}
             >
               <ChevronsRightIcon class="text-primary-900" />
             </Button>
@@ -250,7 +278,28 @@ export const LexControls: Component<LexControlsProps> = (props) => {
         </div>
 
         <div class="flex w-full items-center justify-end">
-          <Show when={props.withNavigation}>
+          <Show
+            when={atEnd() && props.error() === undefined}
+            fallback={
+              <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                <TooltipTrigger
+                  as={Button}
+                  variant="ghost"
+                  size="default"
+                  class="w-fit text-muted-foreground/60 hover:bg-transparent hover:text-muted-foreground/60"
+                  classList={{
+                    "cursor-pointer": atEnd() && props.error() === undefined,
+                    "cursor-not-allowed": !atEnd() || !!props.error(),
+                  }}
+                >
+                  Syntax configuration
+                  <ChevronRightIcon />
+                </TooltipTrigger>
+
+                <TooltipContent>You have to process all of the tokens to continue!</TooltipContent>
+              </Tooltip>
+            }
+          >
             <Button
               variant="ghost"
               size="default"
@@ -284,7 +333,7 @@ function lex(args: LexArgs) {
   let linePos = args.linePos ?? 0;
   let buffer = new Array<string>();
   const tokens = new Array<Token>();
-  const logs = new Array<string>();
+  const logs = new Array<LexLog>();
 
   for (let i = from; i < to; i++) {
     const result = args.lexer.process({ char: args.text[i], line, linePos });

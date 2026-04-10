@@ -96,11 +96,17 @@ export interface SyntaxParserStep {
   stack: Array<string>;
   bufferIndex: number;
   tree: ParseTreeNode;
-  log: string;
+  log: SyntaxLog;
   action: SyntaxParserAction;
   currentTokenIndex: number;
   currentNodeId: string | undefined;
+  error: SyntaxErrorOccurrence | undefined;
 }
+
+export type SyntaxErrorOccurrence = {
+  nodeId: string | undefined;
+  message: string;
+};
 
 export type NodeType = "eof" | "epsilon" | "token" | "non-terminal" | "unknown";
 
@@ -111,9 +117,9 @@ export type Margins = {
   left: number;
 };
 
-export type LexErrorMode = "lex-no-errors" | "lex-error-1" | "lex-error-2";
+export type LexErrorMode = "no-errors" | "ignore-until-found" | "add-missing";
 
-export type SyntaxErrorMode = "syntax-no-errors" | "syntax-error-1" | "syntax-error-2";
+export type SyntaxErrorMode = "no-errors" | "ignore-until-found" | "add-missing";
 
 export type ErrorModeData = {
   mode: LexErrorMode | SyntaxErrorMode;
@@ -132,3 +138,19 @@ export type Rule = {
 };
 
 export type Rules = Record<RuleNumber, Rule>;
+
+export type LexLogType = "init" | "transition" | "emit" | "error" | "eof";
+
+export type SyntaxLogType = "init" | "expand" | "match" | "error" | "accept";
+
+export type Log = {
+  message: string;
+};
+
+export type LexLog = Log & {
+  type: LexLogType;
+};
+
+export type SyntaxLog = Log & {
+  type: SyntaxLogType;
+};

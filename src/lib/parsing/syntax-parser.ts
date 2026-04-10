@@ -11,6 +11,8 @@ import {
   SyntaxParserAction,
   Rule,
   RuleNumber,
+  SyntaxLog,
+  SyntaxErrorOccurrence,
 } from "~/lib/types";
 
 export class SyntaxParser {
@@ -31,7 +33,9 @@ export class SyntaxParser {
   ) {}
 
   private formatLineWithCol(token: Token): string {
-    return `${token.line}:${token.colStart}:${token.colEnd}`;
+    const cols: string =
+      token.colStart === token.colEnd ? `${token.colStart}` : `${token.colStart}-${token.colEnd}`;
+    return `${token.line}:${cols}`;
   }
 
   private createNode(
@@ -57,9 +61,10 @@ export class SyntaxParser {
   }
 
   private snapshot(
-    log: string,
+    log: SyntaxLog,
     action: SyntaxParserAction,
     currentNode?: ParseTreeNode,
+    error?: SyntaxErrorOccurrence,
   ): SyntaxParserStep {
     return {
       stack: [...this.symbolStack],
@@ -69,6 +74,7 @@ export class SyntaxParser {
       action,
       currentTokenIndex: Math.min(this.bufferIndex, this.tokens.length - 1),
       currentNodeId: currentNode?.id,
+      error: error,
     };
   }
 
@@ -79,17 +85,39 @@ export class SyntaxParser {
   }
 
   private pushError(message: string, errorMessage: string): void {
-    this.steps.push(this.snapshot(message, { type: "error", errorMessage }, this.nodeStack.at(-1)));
+    this.steps.push(
+      this.snapshot(
+        {
+          type: "error",
+          message,
+        },
+        { type: "error", errorMessage },
+        this.nodeStack.at(-1),
+        {
+          nodeId: this.nodeStack.at(-1)?.id,
+          message: message,
+        },
+      ),
+    );
     this.reportResult("incorrect");
   }
 
   private handleStackSentinel(lookahead: Token): boolean {
     if (lookahead.type === DOLLAR) {
-      this.steps.push(this.snapshot("[Accept] Input fully consumed", { type: "accept" }));
+      const message: string = "Input fully consumed";
+      this.steps.push(
+        this.snapshot(
+          {
+            type: "accept",
+            message: message,
+          },
+          { type: "accept" },
+        ),
+      );
       this.reportResult("correct");
     } else {
       this.pushError(
-        `[Error] Expected end of input, got '${lookahead.type}'.`,
+        `Expected end of input, got '${lookahead.type}'.`,
         "Unexpected token at the end",
       );
     }
@@ -99,7 +127,7 @@ export class SyntaxParser {
   private handleTerminal(top: string, lookahead: Token): boolean {
     if (top !== lookahead.type) {
       this.pushError(
-        `[Error] - expected '${top}', got '${lookahead.type}' ("${lookahead.value}") at line ${this.formatLineWithCol(lookahead)}.`,
+        `Expected '${top}', got '${lookahead.type}' ("${lookahead.value}") at line ${this.formatLineWithCol(lookahead)}.`,
         `Expected ${top}`,
       );
       return false;
@@ -111,9 +139,13 @@ export class SyntaxParser {
     matchedNode.processed = true;
     this.bufferIndex++;
 
+    const message: string = `${top} = "${lookahead.value}" at line ${this.formatLineWithCol(lookahead)}.`;
     this.steps.push(
       this.snapshot(
-        `[Match] ${top} = "${lookahead.value}" at line ${this.formatLineWithCol(lookahead)}.`,
+        {
+          type: "match",
+          message: message,
+        },
         { type: "match", symbol: top, tokenValue: lookahead.value },
         matchedNode,
       ),
@@ -127,7 +159,7 @@ export class SyntaxParser {
 
     if (ruleNumber === undefined) {
       this.pushError(
-        `[Error] No rule for (${top}, ${lookahead.type}) at line ${this.formatLineWithCol(lookahead)}.`,
+        `No rule for (${top}, ${lookahead.type}) at line ${this.formatLineWithCol(lookahead)}.`,
         `No rule for (${top}, ${lookahead.type})`,
       );
       return false;
@@ -140,9 +172,14 @@ export class SyntaxParser {
 
     if (rule.right.length === 0) {
       parentNode.children = [this.createNode(EPSILON, true)];
+
+      const message: string = `${top} -> ${EPSILON} (rule ${ruleNumber}, lookahead: ${lookahead.type})`;
       this.steps.push(
         this.snapshot(
-          `[EXPAND] ${top} -> ${EPSILON} (rule ${ruleNumber}, lookahead: ${lookahead.type})`,
+          {
+            type: "expand",
+            message: message,
+          },
           { type: "expand", ruleNumber: ruleNumber, symbol: top },
           parentNode,
         ),
@@ -160,9 +197,13 @@ export class SyntaxParser {
       this.nodeStack.push(childNodes[i]);
     }
 
+    const message: string = `${top} -> ${rule.right.join(" ")} (rule ${ruleNumber}, lookahead: ${lookahead.type})`;
     this.steps.push(
       this.snapshot(
-        `[Expand] ${top} -> ${rule.right.join(" ")} (rule ${ruleNumber}, lookahead: ${lookahead.type})`,
+        {
+          type: "expand",
+          message,
+        },
         { type: "expand", ruleNumber, symbol: top },
         parentNode,
       ),
@@ -182,11 +223,18 @@ export class SyntaxParser {
     this.symbolStack = [DOLLAR, PROGRAM];
     this.nodeStack = [this.createNode(DOLLAR), this.root];
 
+    const message: string = `Parser initialized. Starting symbol: ${PROGRAM}`;
     this.steps.push(
-      this.snapshot(`[INIT] Parser initialized. Starting symbol: ${PROGRAM}`, {
-        type: "init",
-        symbol: PROGRAM,
-      }),
+      this.snapshot(
+        {
+          type: "init",
+          message: message,
+        },
+        {
+          type: "init",
+          symbol: PROGRAM,
+        },
+      ),
     );
 
     let safety: number = STEP_SAFETY_LIMIT;
@@ -209,7 +257,7 @@ export class SyntaxParser {
 
     if (safety <= 0) {
       this.pushError(
-        "[Error] Exceeded safety step limit. Possible infinite loop in grammar.",
+        "Exceeded safety step limit. Possible infinite loop in grammar.",
         "Step limit exceeded",
       );
     }

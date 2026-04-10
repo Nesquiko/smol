@@ -1,13 +1,17 @@
+import BracesIcon from "lucide-solid/icons/braces";
 import CodeIcon from "lucide-solid/icons/code";
 import TerminalIcon from "lucide-solid/icons/terminal";
 import { Accessor, Component, createEffect, createSignal, For, on, Setter, Show } from "solid-js";
 
 import { CodeLine } from "~/components/code-line";
 import { LexControls } from "~/components/lex-controls";
+import { NoData } from "~/components/no-data";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Caret, Token } from "~/lib/types";
+import { LexError } from "~/lib/lexer";
+import { Caret, LexLog, Token } from "~/lib/types";
+import { formatLog } from "~/lib/ui-utils";
 
 type LexTab = "code" | "logs";
 
@@ -22,8 +26,9 @@ interface LexScreenProps {
 export const LexScreen: Component<LexScreenProps> = (props) => {
   const [hoveredToken, setHoveredToken] = createSignal<Token | undefined>(undefined);
   const [pointer, setPointer] = createSignal<number>(0);
-  const [logs, setLogs] = createSignal<Array<string>>([]);
+  const [logs, setLogs] = createSignal<Array<LexLog>>([]);
   const [activeTab, setActiveTab] = createSignal<LexTab>("code");
+  const [error, setError] = createSignal<LexError | undefined>(undefined);
 
   let codeContainer: HTMLDivElement | undefined;
   let tokensContainer: HTMLDivElement | undefined;
@@ -132,6 +137,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                                     hoveredToken() ? [hoveredToken()!] : []
                                   }
                                   caret={caretPosition}
+                                  lexError={error}
                                 />
                               </div>
                             );
@@ -143,9 +149,15 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                     <div
                       ref={tokensContainer}
                       onScroll={handleScroll}
-                      class="w-1/2 overflow-x-auto overflow-y-auto border-l border-border bg-muted/30"
+                      class="w-1/2 overflow-x-auto border-l border-border bg-muted/30"
+                      classList={{
+                        "overflow-y-auto": tokensByLine().size !== 0,
+                      }}
                     >
-                      <div class="flex flex-col gap-0 py-3">
+                      <div class="relative flex flex-col gap-0 py-3">
+                        <Show when={tokensByLine().size === 0}>
+                          <NoData icon={BracesIcon} text="No tokens yet" class="mt-32" />
+                        </Show>
                         <For each={lines()}>
                           {(_: string, idx: Accessor<number>) => {
                             const lineNum = (): number => idx() + 1;
@@ -184,25 +196,24 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                   >
                     <Show
                       when={logs().length !== 0}
-                      fallback={
-                        <div class="flex h-full w-full flex-1 flex-col items-center justify-center">
-                          <TerminalIcon class="size-24 text-primary-700" />
-                          <span class="text-sm font-medium text-primary-600">No logs yet</span>
-                        </div>
-                      }
+                      fallback={<NoData icon={TerminalIcon} text="No logs yet" />}
                     >
                       <For each={logs()}>
-                        {(log: string, index: Accessor<number>) => (
+                        {(log: LexLog, index: Accessor<number>) => (
                           <p
                             class="w-full text-left text-xs leading-tight wrap-break-word whitespace-pre-wrap"
                             classList={{
-                              "text-primary-300": log.startsWith("Read"),
+                              "text-foreground": log.type === "init",
+                              "text-primary-300": log.type === "emit",
+                              "text-primary-500": log.type === "transition",
+                              "text-green-300 font-bold": log.type === "eof",
+                              "text-red-400": log.type === "error",
                             }}
                           >
                             <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">
                               {String(index() + 1).padStart(padWidth(), " ")}
                             </span>
-                            {log}
+                            {formatLog(log)}
                           </p>
                         )}
                       </For>
@@ -219,6 +230,8 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
               setLogs={setLogs}
               setTokens={props.setTokens}
               caretPosition={caretPosition}
+              error={error}
+              setError={setError}
               withNavigation={true}
               onBack={props.onBack}
               onContinue={props.onContinue}
