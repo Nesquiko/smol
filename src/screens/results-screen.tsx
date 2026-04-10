@@ -1,31 +1,53 @@
 import type { Chart, ChartData, ChartOptions } from "chart.js";
 
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
-import { Accessor, Component, createMemo, For } from "solid-js";
+import { Accessor, Component, createMemo, For, Show } from "solid-js";
 
 import { ResultStatCard } from "~/components/result-stat-card";
 import { BarList } from "~/components/ui/bar-list";
 import { Button } from "~/components/ui/button";
 import { DonutChart } from "~/components/ui/charts";
 import { computeLexStats, computeSyntaxStats, LexStats, SyntaxStats } from "~/lib/parsing/stats";
-import { SyntaxParserStep, Result, Token } from "~/lib/types";
+import { SyntaxParserStep, Result, Token, SyntaxErrorMode, LexErrorMode } from "~/lib/types";
 
 interface ResultsScreenProps {
   result: Accessor<Result>;
   tokens: Accessor<Array<Token>>;
   steps: Accessor<Array<SyntaxParserStep>>;
+  lexErrorMode: Accessor<LexErrorMode | undefined>;
+  syntaxErrorMode: Accessor<SyntaxErrorMode | undefined>;
   onBack: () => void;
 }
 
 export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
-  const lexStats = createMemo((): LexStats => computeLexStats(props.tokens()));
-  const synStats = createMemo((): SyntaxStats => computeSyntaxStats(props.steps()));
+  const lexStats: Accessor<LexStats> = createMemo((): LexStats => computeLexStats(props.tokens()));
+  const synStats: Accessor<SyntaxStats> = createMemo(
+    (): SyntaxStats => computeSyntaxStats(props.steps()),
+  );
 
   const lexStatItems = createMemo(() => [
     { label: "Total tokens", value: lexStats().totalTokens },
     { label: "Lines of code", value: lexStats().lines },
     { label: "Unique token types", value: lexStats().uniqueTokenTypes },
   ]);
+
+  const lexRecoveryStatItems = createMemo(() => {
+    if (props.lexErrorMode() === "add-missing") {
+      return [
+        { label: "Strategy used", value: "Add" },
+        { label: "Successful recoveries", value: 5 },
+        { label: "Characters inserted", value: 12 },
+      ];
+    } else if (props.lexErrorMode() === "ignore-until-found") {
+      return [
+        { label: "Strategy used", value: "Skip" },
+        { label: "Successful recoveries", value: 5 },
+        { label: "Characters skipped", value: 12 },
+      ];
+    } else {
+      return [{ label: "Strategy used", value: "None" }];
+    }
+  });
 
   const synStatItems = createMemo(() => [
     { label: "Total steps", value: synStats().totalSteps },
@@ -39,6 +61,24 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
       dim: synStats().errors === 0,
     },
   ]);
+
+  const syntaxRecoveryStatItems = createMemo(() => {
+    if (props.syntaxErrorMode() === "add-missing") {
+      return [
+        { label: "Strategy used", value: "Add" },
+        { label: "Successful recoveries", value: synStats().recoveries },
+        { label: "Tokens inserted", value: synStats().tokensInserted },
+      ];
+    } else if (props.syntaxErrorMode() === "ignore-until-found") {
+      return [
+        { label: "Strategy used", value: "Skip" },
+        { label: "Successful recoveries", value: synStats().recoveries },
+        { label: "Tokens skipped", value: synStats().tokensSkipped },
+      ];
+    } else {
+      return [{ label: "Strategy used", value: "None" }];
+    }
+  });
 
   const donutData = createMemo(
     (): ChartData<"doughnut"> => ({
@@ -94,6 +134,10 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
     },
   };
 
+  const resultHeading = (): string => {
+    return props.result().replaceAll("-", " ");
+  };
+
   const resultDescription = (): string => {
     switch (props.result()) {
       case "correct":
@@ -102,6 +146,8 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
         return "The parser encountered errors in the input.";
       case "unknown":
         return "Could not determine the correctness of the input.";
+      case "correct-with-errors":
+        return "The parser encountered errors in the input but has successfully recovered from them.";
     }
   };
 
@@ -109,14 +155,15 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center gap-6 px-6 py-12">
       <div class="flex flex-col items-center gap-2">
         <span
-          class="text-6xl font-bold text-primary-300 uppercase"
+          class="text-6xl font-bold uppercase"
           classList={{
             "text-primary-300": props.result() === "unknown",
             "text-green-300": props.result() === "correct",
             "text-red-400": props.result() === "incorrect",
+            "text-yellow-200": props.result() === "correct-with-errors",
           }}
         >
-          {props.result()}
+          {resultHeading()}
         </span>
         <span class="text-xs text-muted-foreground">{resultDescription()}</span>
       </div>
@@ -144,6 +191,20 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
 
         <div class="flex w-full flex-col gap-3">
           <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+            Lexical error recovery
+          </h2>
+          <div class="grid w-full grid-cols-3 gap-3">
+            <For each={lexRecoveryStatItems()}>
+              {(s) => <ResultStatCard label={s.label} value={s.value} dim={s.value === 0} />}
+            </For>
+          </div>
+          <p class="text-xs text-muted-foreground/40 italic">
+            TODO: luky - lexical error recovery not yet implemented, showing dummy data
+          </p>
+        </div>
+
+        <div class="flex w-full flex-col gap-3">
+          <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
             Syntax analysis
           </h2>
           <div class="flex w-full flex-col items-center justify-center gap-3 md:flex-row">
@@ -158,6 +219,19 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
             </div>
           </div>
         </div>
+
+        <Show when={props.result() === "correct-with-errors"}>
+          <div class="flex w-full flex-col gap-3">
+            <h2 class="text-sm font-semibold tracking-widest text-muted-foreground uppercase">
+              Syntax error recovery
+            </h2>
+            <div class="grid w-full grid-cols-3 gap-3">
+              <For each={syntaxRecoveryStatItems()}>
+                {(s) => <ResultStatCard label={s.label} value={s.value} />}
+              </For>
+            </div>
+          </div>
+        </Show>
       </div>
 
       <Button

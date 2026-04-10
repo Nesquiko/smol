@@ -1,9 +1,52 @@
+import type { LucideIcon } from "lucide-solid";
+
+import ArrowDownIcon from "lucide-solid/icons/arrow-down";
+import ArrowRightIcon from "lucide-solid/icons/arrow-right";
+import BracesIcon from "lucide-solid/icons/braces";
+import CaseLowerIcon from "lucide-solid/icons/case-lower";
+import ChartLineIcon from "lucide-solid/icons/chart-line";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
-import { Accessor, Component, Setter, Show } from "solid-js";
+import FileInputIcon from "lucide-solid/icons/file-input";
+import SettingsIcon from "lucide-solid/icons/settings";
+import Settings2Icon from "lucide-solid/icons/settings-2";
+import ShrinkIcon from "lucide-solid/icons/shrink";
+import { Accessor, Component, For, Setter, Show } from "solid-js";
 
 import { InputCommand } from "~/components/input-command";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
+
+type ProcessItem = {
+  icon: LucideIcon;
+  label: string;
+};
+
+const PROCESS: Array<ProcessItem> = [
+  {
+    icon: FileInputIcon,
+    label: "File Input",
+  } satisfies ProcessItem,
+  {
+    icon: SettingsIcon,
+    label: "Lexical Config",
+  } satisfies ProcessItem,
+  {
+    icon: CaseLowerIcon,
+    label: "Lexical Analysis",
+  } satisfies ProcessItem,
+  {
+    icon: Settings2Icon,
+    label: "Syntax Config",
+  } satisfies ProcessItem,
+  {
+    icon: BracesIcon,
+    label: "Syntax Analysis",
+  } satisfies ProcessItem,
+  {
+    icon: ChartLineIcon,
+    label: "Results",
+  } satisfies ProcessItem,
+] satisfies Array<ProcessItem>;
 
 interface InputScreenProps {
   fileContent: Accessor<string | undefined>;
@@ -14,12 +57,38 @@ interface InputScreenProps {
 export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps) => {
   return (
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center">
-      <div class="flex w-full max-w-md items-center justify-center">
-        <InputCommand
-          fileContent={props.fileContent}
-          setFileContent={props.setFileContent}
-          onContinue={props.onContinue}
-        />
+      <div class="flex w-full flex-col items-center justify-center gap-32">
+        <div class="flex w-full flex-col items-center justify-center gap-10 opacity-50 lg:flex-row lg:gap-5">
+          <For each={PROCESS}>
+            {(item: ProcessItem, index: Accessor<number>) => (
+              <>
+                <div class="relative flex size-20 items-center justify-center rounded-full bg-primary-700">
+                  <item.icon class="size-10 text-primary-500" />
+                  <span class="absolute bottom-0 left-1/2 w-26 -translate-x-1/2 translate-y-8 text-center text-sm font-medium text-primary-400">
+                    {item.label}
+                  </span>
+                </div>
+                <Show when={index() !== PROCESS.length - 1}>
+                  <ArrowRightIcon class="hidden text-primary-700 lg:block" />
+                  <ArrowDownIcon class="block text-primary-700 lg:hidden" />
+                </Show>
+              </>
+            )}
+          </For>
+        </div>
+
+        <div class="w-full max-w-md pb-24 lg:pb-0">
+          <InputCommand
+            fileContent={props.fileContent}
+            setFileContent={props.setFileContent}
+            onContinue={props.onContinue}
+          />
+        </div>
+      </div>
+
+      <div class="absolute top-6 left-6 flex flex-row items-center justify-center gap-2">
+        <ShrinkIcon class="size-5" />
+        <span class="font-bold tracking-widest text-primary-300">smol</span>
       </div>
 
       <div class="absolute right-0 bottom-0 p-6">

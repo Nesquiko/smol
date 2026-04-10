@@ -11,6 +11,7 @@ import { SyntaxControls } from "~/components/syntax-controls";
 import { FlyingToken, TokenFlyAnimation } from "~/components/token-fly-animation";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import {
   BufferType,
   SyntaxParserStep,
@@ -86,6 +87,12 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
   const padWidth = (): number => String(logs().length).length;
 
+  const errorsRecorded = (): boolean =>
+    props
+      .steps()
+      .slice(0, stepIndex() + 1)
+      .some((step: SyntaxParserStep): boolean => step.error !== undefined);
+
   return (
     <div class="relative flex h-screen w-full flex-col items-center justify-center gap-6">
       <TokenFlyAnimation flyingTokens={flyingTokens} onComplete={handleFlyComplete} />
@@ -101,19 +108,37 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
             <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
               <TabsTrigger
                 value="tree"
-                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="group relative w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                 style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
                 <GitBranchIcon class="inline-block size-4 rotate-90" />
                 Parse tree
+                <Show when={errorsRecorded()}>
+                  <Tooltip placement="left" openDelay={0} closeDelay={0}>
+                    <TooltipTrigger
+                      as="div"
+                      class="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 scale-70 rounded-full bg-red-300/30 transition-all duration-300 group-data-[selected]:scale-100 group-data-[selected]:bg-red-500/30 hover:bg-red-500"
+                    />
+                    <TooltipContent>Errors have been recorded</TooltipContent>
+                  </Tooltip>
+                </Show>
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
+                class="group relative w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-[selected]:bg-primary-700 data-[selected]:shadow-none"
                 style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
               >
                 <TerminalIcon class="inline-block size-4 rotate-90" />
                 Logs
+                <Show when={errorsRecorded()}>
+                  <Tooltip placement="left" openDelay={0} closeDelay={0}>
+                    <TooltipTrigger
+                      as="div"
+                      class="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 scale-70 rounded-full bg-red-300/30 transition-all duration-300 group-data-[selected]:scale-100 group-data-[selected]:bg-red-500/30 hover:bg-red-500"
+                    />
+                    <TooltipContent>Errors have been recorded</TooltipContent>
+                  </Tooltip>
+                </Show>
               </TabsTrigger>
             </TabsList>
 
@@ -167,6 +192,8 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                           "text-primary-300": log.type === "match",
                           "text-red-400": log.type === "error",
                           "text-green-300 font-bold": log.type === "accept",
+                          "text-purple-200": log.type === "skip",
+                          "text-yellow-200": log.type === "recover",
                         }}
                       >
                         <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">

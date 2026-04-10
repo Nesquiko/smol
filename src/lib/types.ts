@@ -50,7 +50,7 @@ export type Direction = "none" | "backward" | "forward";
 
 export type ControlButton = "previous" | "next" | "play" | "first" | "last";
 
-export type Result = "unknown" | "correct" | "incorrect";
+export type Result = "unknown" | "correct" | "incorrect" | "correct-with-errors";
 
 export type Caret = {
   line: number;
@@ -82,7 +82,14 @@ export type BufferType = Array<Token>;
 export type StackItem = Token | NonTerminal | Dollar;
 export type StackType = Array<StackItem>;
 
-export type SyntaxParserActionType = "init" | "expand" | "match" | "accept" | "error";
+export type SyntaxParserActionType =
+  | "init"
+  | "expand"
+  | "match"
+  | "accept"
+  | "error"
+  | "skip"
+  | "recover";
 
 export interface SyntaxParserAction {
   type: SyntaxParserActionType;
@@ -90,6 +97,8 @@ export interface SyntaxParserAction {
   symbol?: string;
   tokenValue?: string;
   errorMessage?: string;
+  skippedToken?: TokenType;
+  strategy?: SyntaxErrorMode;
 }
 
 export interface SyntaxParserStep {
@@ -141,7 +150,7 @@ export type Rules = Record<RuleNumber, Rule>;
 
 export type LexLogType = "init" | "transition" | "emit" | "error" | "eof";
 
-export type SyntaxLogType = "init" | "expand" | "match" | "error" | "accept";
+export type SyntaxLogType = "init" | "expand" | "match" | "error" | "accept" | "skip" | "recover";
 
 export type Log = {
   message: string;

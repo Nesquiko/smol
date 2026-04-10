@@ -21,14 +21,16 @@ const SYNTAX_ERROR_MODES: Array<ErrorModeData> = [
   } satisfies ErrorModeData,
   {
     mode: "ignore-until-found",
-    title: "Auto-fix error 1",
-    description: "This mode will fix error no. 1 for you automatically.",
+    title: "Ignore Until Found",
+    description:
+      "Upon finding an unexpected token, this mode will ignore all following tokens until it finds the corresponding one.",
     icon: ShieldIcon,
   } satisfies ErrorModeData,
   {
     mode: "add-missing",
-    title: "Auto-fix error 2",
-    description: "This mode will fix error no. 2 for you automatically.",
+    title: "Add If Missing",
+    description:
+      "Upon finding an unexpected token, this mode will synthetically add the fitting token to continue.",
     icon: ShieldIcon,
   } satisfies ErrorModeData,
 ] satisfies Array<ErrorModeData>;
@@ -45,7 +47,7 @@ export const SyntaxConfigScreen: Component<SyntaxConfigScreenProps> = (
 ) => {
   return (
     <div class="relative flex min-h-screen w-full flex-1 items-center justify-center">
-      <div class="flex w-full max-w-2xl flex-col items-center justify-center gap-12">
+      <div class="flex w-full max-w-3xl flex-col items-center justify-center gap-12">
         <div class="flex w-full flex-col items-center justify-center gap-3">
           <h1 class="text-4xl font-bold">Syntax configuration</h1>
           <p class="text-sm text-muted-foreground/60">
@@ -58,7 +60,7 @@ export const SyntaxConfigScreen: Component<SyntaxConfigScreenProps> = (
           <For each={SYNTAX_ERROR_MODES}>
             {(modeData: ErrorModeData) => (
               <Card
-                class="group relative mx-auto h-full w-full max-w-64 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
+                class="group relative mx-auto h-full min-h-40 w-full max-w-72 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
                 classList={{
                   "ring-primary-300 -translate-y-1": props.syntaxErrorMode() === modeData.mode,
                   "ring-transparent hover:ring-primary-300/30":
@@ -74,10 +76,12 @@ export const SyntaxConfigScreen: Component<SyntaxConfigScreenProps> = (
               >
                 <CardHeader>
                   <CardTitle class="flex flex-row items-center justify-start gap-2 tracking-normal select-none">
-                    <modeData.icon class="mb-0.5 inline-block size-5" />
+                    <modeData.icon class="mb-0.5 inline-block size-5 flex-shrink-0" />
                     {modeData.title}
                   </CardTitle>
-                  <CardDescription class="mt-4 select-none">{modeData.description}</CardDescription>
+                  <CardDescription class="mt-4 text-xs text-muted-foreground/60 select-none">
+                    {modeData.description}
+                  </CardDescription>
                 </CardHeader>
 
                 <Dynamic

@@ -1,0 +1,5 @@
+BEGIN
+READ(a);
+a 5;
+WRITE(a);
+END

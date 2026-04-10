@@ -4,7 +4,7 @@ import FileIcon from "lucide-solid/icons/file";
 import FileChartColumnIncreasingIcon from "lucide-solid/icons/file-chart-column-increasing";
 import FileInputIcon from "lucide-solid/icons/file-input";
 import TextAlignStartIcon from "lucide-solid/icons/text-align-start";
-import { Accessor, Component, createSignal, For, Setter } from "solid-js";
+import { Accessor, Component, createMemo, createSignal, For, Setter } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { Motion } from "solid-motionone";
 
@@ -19,6 +19,11 @@ import {
 } from "~/components/ui/command";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { FILE_EXAMPLES, InputExample } from "~/lib/data/file-examples";
+
+type ExampleGroup = {
+  heading: string;
+  examples: Accessor<Array<InputExample>>;
+};
 
 interface InputCommandProps {
   fileContent: Accessor<string | undefined>;
@@ -46,6 +51,27 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
     props.setFileContent(text);
     props.onContinue();
   };
+
+  const correctExamples: Accessor<Array<InputExample>> = createMemo(
+    (): Array<InputExample> =>
+      FILE_EXAMPLES.filter((e: InputExample): boolean => !e.intentionalError),
+  );
+  const incorrectExamples: Accessor<Array<InputExample>> = createMemo(
+    (): Array<InputExample> =>
+      FILE_EXAMPLES.filter((e: InputExample): boolean => !!e.intentionalError),
+  );
+
+  const exampleGroups: Accessor<Array<ExampleGroup>> = () =>
+    [
+      {
+        heading: "Correct examples",
+        examples: correctExamples,
+      } satisfies ExampleGroup,
+      {
+        heading: "Examples with error",
+        examples: incorrectExamples,
+      } satisfies ExampleGroup,
+    ] satisfies Array<ExampleGroup>;
 
   return (
     <>
@@ -77,59 +103,63 @@ export const InputCommand: Component<InputCommandProps> = (props: InputCommandPr
         <CommandInput placeholder="Search input file..." />
         <CommandList>
           <CommandEmpty>No examples found.</CommandEmpty>
-          <CommandGroup heading="Examples">
-            <For each={FILE_EXAMPLES}>
-              {(example: InputExample) => {
-                const isHovered = (): boolean => hovered() === example.id;
+          <For each={exampleGroups()}>
+            {(group: ExampleGroup) => (
+              <CommandGroup heading={group.heading}>
+                <For each={group.examples()}>
+                  {(example: InputExample) => {
+                    const isHovered = (): boolean => hovered() === example.id;
 
-                return (
-                  <CommandItem
-                    onSelect={() => handleSelect(example)}
-                    onMouseEnter={() => setHovered(example.id)}
-                    onMouseLeave={() => setHovered(undefined)}
-                    class="group relative flex cursor-pointer py-2 text-sm"
-                  >
-                    <Dynamic
-                      component={isHovered() ? FileChartColumnIncreasingIcon : FileIcon}
-                      class="mr-2 inline-block p-[2px] text-primary-500"
-                    />
-                    <span>{example.name}</span>
+                    return (
+                      <CommandItem
+                        onSelect={() => handleSelect(example)}
+                        onMouseEnter={() => setHovered(example.id)}
+                        onMouseLeave={() => setHovered(undefined)}
+                        class="group relative flex cursor-pointer py-2 text-sm"
+                      >
+                        <Dynamic
+                          component={isHovered() ? FileChartColumnIncreasingIcon : FileIcon}
+                          class="mr-2 inline-block p-[2px] text-primary-500"
+                        />
+                        <span>{example.name}</span>
 
-                    <Motion.div
-                      class="absolute right-4 flex w-fit items-center justify-end gap-3"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{
-                        opacity: isHovered() ? 1 : 0,
-                        x: isHovered() ? 0 : 20,
-                      }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Tooltip placement="top" openDelay={0} closeDelay={0}>
-                        <TooltipTrigger as="div">
-                          <TextAlignStartIcon class="mr-1 inline-block p-[2px] text-primary-500" />
-                          <span class="text-xs">{example.lineCount}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {example.lineCount}
-                          <span class="text-primary-500"> lines</span>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip placement="top" openDelay={0} closeDelay={0}>
-                        <TooltipTrigger as="div">
-                          <CaseSensitiveIcon class="mr-1 inline-block p-[2px] text-primary-500" />
-                          <span class="text-xs">{example.characterCount}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {example.characterCount}
-                          <span class="text-primary-500"> characters</span>
-                        </TooltipContent>
-                      </Tooltip>
-                    </Motion.div>
-                  </CommandItem>
-                );
-              }}
-            </For>
-          </CommandGroup>
+                        <Motion.div
+                          class="absolute right-4 flex w-fit items-center justify-end gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{
+                            opacity: isHovered() ? 1 : 0,
+                            x: isHovered() ? 0 : 20,
+                          }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                            <TooltipTrigger as="div">
+                              <TextAlignStartIcon class="mr-1 inline-block p-[2px] text-primary-500" />
+                              <span class="text-xs">{example.lineCount}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {example.lineCount}
+                              <span class="text-primary-500"> lines</span>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip placement="top" openDelay={0} closeDelay={0}>
+                            <TooltipTrigger as="div">
+                              <CaseSensitiveIcon class="mr-1 inline-block p-[2px] text-primary-500" />
+                              <span class="text-xs">{example.characterCount}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {example.characterCount}
+                              <span class="text-primary-500"> characters</span>
+                            </TooltipContent>
+                          </Tooltip>
+                        </Motion.div>
+                      </CommandItem>
+                    );
+                  }}
+                </For>
+              </CommandGroup>
+            )}
+          </For>
         </CommandList>
       </CommandDialog>
     </>

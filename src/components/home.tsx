@@ -31,7 +31,7 @@ export const Home = () => {
   };
 
   const syntaxParserSteps: Accessor<Array<SyntaxParserStep>> = createMemo(
-    (): Array<SyntaxParserStep> => new SyntaxParser(tokens(), onResult).parse(),
+    (): Array<SyntaxParserStep> => new SyntaxParser(tokens(), onResult, syntaxErrorMode).parse(),
   );
 
   return (
@@ -88,6 +88,8 @@ export const Home = () => {
               result={result}
               tokens={tokens}
               steps={syntaxParserSteps}
+              lexErrorMode={lexErrorMode}
+              syntaxErrorMode={syntaxErrorMode}
               onBack={() => setCurrentPage("syntax")}
             />
           </Match>

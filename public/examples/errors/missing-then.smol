@@ -1,0 +1,4 @@
+BEGIN
+READ(a);
+IF TRUE WRITE(a); ELSE WRITE(a);
+END
