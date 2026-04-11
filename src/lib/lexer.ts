@@ -213,8 +213,14 @@ class AddIfMissingLexer extends CorrectLexer {
     if (result.type === "none") {
       return result;
     } else if (result.type === "ok") {
-      result.errorRecovery = { mode: "add-missing", added: this.added };
-      this.added = "";
+      if (result.errorRecovery || this.added !== "") {
+        result.errorRecovery = result.errorRecovery ?? {
+          mode: "add-missing",
+          added: this.added,
+        };
+        this.added = "";
+      }
+
       return result;
     }
 
