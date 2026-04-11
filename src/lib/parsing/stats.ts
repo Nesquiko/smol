@@ -1,3 +1,4 @@
+import { LexErrorRecovery } from "~/lib/lexer";
 import { SyntaxParserStep, Token } from "~/lib/types";
 
 export type LexStats = {
@@ -6,7 +7,11 @@ export type LexStats = {
   uniqueTokenTypes: number;
   mostFrequentType: string;
   tokenTypeFrequency: Array<{ name: string; value: number }>;
+
+  errors: LexErrorStats;
 };
+
+type LexErrorStats = { count: number; skipped: number; added: Array<string> };
 
 export interface SyntaxStats {
   totalSteps: number;
@@ -21,9 +26,13 @@ export interface SyntaxStats {
   tokensInserted: number;
 }
 
-export const computeLexStats = (tokens: Array<Token>): LexStats => {
+export const computeLexStats = (
+  tokens: Array<Token>,
+  lexErrorRecoveries: Array<LexErrorRecovery>,
+): LexStats => {
   const freq: Record<string, number> = {};
   let maxLine: number = 0;
+  const errors = { count: 0, skipped: 0, added: new Array<string>() };
 
   for (const token of tokens) {
     freq[token.type] = (freq[token.type] ?? 0) + 1;
@@ -38,12 +47,25 @@ export const computeLexStats = (tokens: Array<Token>): LexStats => {
     .slice(0, 5)
     .map(([name, value]: [string, number]): { name: string; value: number } => ({ name, value }));
 
+  errors.count = lexErrorRecoveries.length;
+  for (const lexErr of lexErrorRecoveries) {
+    switch (lexErr.mode) {
+      case "skip-until-found":
+        errors.skipped += lexErr.skippedChars;
+        break;
+      case "add-missing":
+        errors.added.push(lexErr.added);
+        break;
+    }
+  }
+
   return {
     totalTokens: tokens.length,
     lines: maxLine,
     uniqueTokenTypes: Object.keys(freq).length,
     mostFrequentType,
     tokenTypeFrequency,
+    errors,
   };
 };
 

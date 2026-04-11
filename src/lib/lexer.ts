@@ -11,8 +11,12 @@ type IllegalCharError = { stateLabel: string; char: string; expected?: string };
 
 export type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
 
+export type LexErrorRecovery =
+  | { mode: "skip-until-found"; skippedChars: number }
+  | { mode: "add-missing"; added: string };
+
 export type ProcessResult =
-  | { type: "ok"; tokens: Array<Token>; logs: Array<LexLog> }
+  | { type: "ok"; tokens: Array<Token>; logs: Array<LexLog>; errorRecovery?: LexErrorRecovery }
   | { type: "error"; error: LexError; logs: Array<LexLog> }
   | { type: "none"; logs: Array<LexLog> };
 
@@ -154,16 +158,32 @@ class CorrectLexer implements Lexer {
 }
 
 class SkipUntilFoundLexer extends CorrectLexer {
+  private skipped: number;
+
   constructor(args: Partial<{ startingLine: number }>) {
     super(args);
+    this.skipped = 0;
   }
 
   process(args: LexerArgs, tokens?: Array<Token>, logs?: Array<LexLog>): ProcessResult {
     const beforeState = this.state;
     const result = super.process(args, tokens, logs);
 
-    if (result.type !== "error") return result;
+    if (result.type === "none") {
+      return result;
+    } else if (result.type === "ok") {
+      if (result.errorRecovery || this.skipped !== 0) {
+        result.errorRecovery = result.errorRecovery ?? {
+          mode: "skip-until-found",
+          skippedChars: this.skipped,
+        };
+        this.skipped = 0;
+      }
 
+      return result;
+    }
+
+    this.skipped++;
     result.logs.push({
       type: "recover",
       message: `error recovery: skipping char '${displayChar(args.char)}' (input ${displayPos(args)})`,
@@ -180,16 +200,26 @@ class SkipUntilFoundLexer extends CorrectLexer {
 const RECOVERY_AMBIGUOUS_CHAR = "R";
 
 class AddIfMissingLexer extends CorrectLexer {
+  private added: string;
   constructor(args: Partial<{ startingLine: number }>) {
     super(args);
+    this.added = "";
   }
 
   process(args: LexerArgs, tokens?: Array<Token>, logs?: Array<LexLog>): ProcessResult {
     const beforeState = this.state;
     const result = super.process(args, tokens, logs);
-    if (result.type !== "error") return result;
+
+    if (result.type === "none") {
+      return result;
+    } else if (result.type === "ok") {
+      result.errorRecovery = { mode: "add-missing", added: this.added };
+      this.added = "";
+      return result;
+    }
 
     const expectedChar = result.error.error.expected ?? RECOVERY_AMBIGUOUS_CHAR;
+    this.added = expectedChar;
     result.logs.push({
       type: "recover",
       message: `error recovery: adding '${displayChar(expectedChar)}' at input ${displayPos(args)}`,

@@ -1,5 +1,6 @@
 import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
+import { LexErrorRecovery } from "~/lib/lexer";
 import { SyntaxParser } from "~/lib/parsing/syntax-parser";
 import {
   Screen,
@@ -24,6 +25,8 @@ export const Home = () => {
     undefined,
   );
   const [tokens, setTokens] = createSignal<Array<Token>>([]);
+  const [lexErrorRecoveries, setLexErrorRecoveries] = createSignal<Array<LexErrorRecovery>>([]);
+
   const [result, setResult] = createSignal<Result>("unknown");
 
   const onResult = (res: Result) => {
@@ -60,6 +63,7 @@ export const Home = () => {
               fileContent={fileContent}
               tokens={tokens}
               setTokens={setTokens}
+              setLexErrorRecoveries={setLexErrorRecoveries}
               lexErrorMode={lexErrorMode}
               onContinue={() => setCurrentPage("syntax-config")}
               onBack={() => setCurrentPage("lex-config")}
@@ -90,6 +94,7 @@ export const Home = () => {
               tokens={tokens}
               steps={syntaxParserSteps}
               lexErrorMode={lexErrorMode}
+              lexErrorRecoveries={lexErrorRecoveries}
               syntaxErrorMode={syntaxErrorMode}
               onBack={() => setCurrentPage("syntax")}
             />

@@ -10,7 +10,7 @@ import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
-import { LexError } from "~/lib/lexer";
+import { LexError, LexErrorRecovery } from "~/lib/lexer";
 import { Caret, LexErrorMode, LexLog, Token } from "~/lib/types";
 import { formatLog } from "~/lib/ui-utils";
 
@@ -20,6 +20,7 @@ interface LexScreenProps {
   fileContent: Accessor<string | undefined>;
   tokens: Accessor<Array<Token>>;
   setTokens: Setter<Array<Token>>;
+  setLexErrorRecoveries: Setter<Array<LexErrorRecovery>>;
   lexErrorMode: Accessor<LexErrorMode | undefined>;
   onContinue: () => void;
   onBack: () => void;
@@ -252,6 +253,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
               setPointer={setPointer}
               setLogs={setLogs}
               setTokens={props.setTokens}
+              setLexErrorRecoveries={props.setLexErrorRecoveries}
               caretPosition={caretPosition}
               error={error}
               lexErrorMode={props.lexErrorMode}

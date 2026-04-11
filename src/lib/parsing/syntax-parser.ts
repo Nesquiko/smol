@@ -146,7 +146,7 @@ export class SyntaxParser {
 
   private handleTerminal(top: string, lookahead: Token): boolean {
     if (top !== lookahead.type) {
-      if (this.errorMode() === "ignore-until-found") {
+      if (this.errorMode() === "skip-until-found") {
         return this.recoverTerminalBySkipping(top, lookahead);
       } else if (this.errorMode() === "add-missing") {
         return this.recoverTerminalByInserting(top, lookahead);
@@ -224,7 +224,7 @@ export class SyntaxParser {
           type: "recover",
           message: `Recovered: found '${top}' at line ${this.formatLineWithCol(recovered)}`,
         },
-        { type: "recover", strategy: "ignore-until-found" },
+        { type: "recover", strategy: "skip-until-found" },
         this.nodeStack.at(-1),
       ),
     );
@@ -273,7 +273,7 @@ export class SyntaxParser {
     const ruleNumber: RuleNumber = PARSE_TABLE[top]?.[lookahead.type];
 
     if (ruleNumber === undefined) {
-      if (this.errorMode() === "ignore-until-found") {
+      if (this.errorMode() === "skip-until-found") {
         return this.recoverNonTerminalBySkipping(top, lookahead);
       } else if (this.errorMode() === "add-missing") {
         return this.recoverNonTerminalByInserting(top, lookahead);
@@ -374,7 +374,7 @@ export class SyntaxParser {
           type: "recover",
           message: `Recovered at '${recovered.type}' for non-terminal '${top}' at line ${this.formatLineWithCol(recovered)}`,
         },
-        { type: "recover", strategy: "ignore-until-found" },
+        { type: "recover", strategy: "skip-until-found" },
         this.nodeStack.at(-1),
       ),
     );

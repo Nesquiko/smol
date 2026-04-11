@@ -7,6 +7,7 @@ import { ResultStatCard } from "~/components/result-stat-card";
 import { BarList } from "~/components/ui/bar-list";
 import { Button } from "~/components/ui/button";
 import { DonutChart } from "~/components/ui/charts";
+import { LexErrorRecovery } from "~/lib/lexer";
 import { computeLexStats, computeSyntaxStats, LexStats, SyntaxStats } from "~/lib/parsing/stats";
 import { SyntaxParserStep, Result, Token, SyntaxErrorMode, LexErrorMode } from "~/lib/types";
 
@@ -15,12 +16,15 @@ interface ResultsScreenProps {
   tokens: Accessor<Array<Token>>;
   steps: Accessor<Array<SyntaxParserStep>>;
   lexErrorMode: Accessor<LexErrorMode | undefined>;
+  lexErrorRecoveries: Accessor<Array<LexErrorRecovery>>;
   syntaxErrorMode: Accessor<SyntaxErrorMode | undefined>;
   onBack: () => void;
 }
 
 export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
-  const lexStats: Accessor<LexStats> = createMemo((): LexStats => computeLexStats(props.tokens()));
+  const lexStats: Accessor<LexStats> = createMemo(
+    (): LexStats => computeLexStats(props.tokens(), props.lexErrorRecoveries()),
+  );
   const synStats: Accessor<SyntaxStats> = createMemo(
     (): SyntaxStats => computeSyntaxStats(props.steps()),
   );
@@ -35,14 +39,15 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
     if (props.lexErrorMode() === "add-missing") {
       return [
         { label: "Strategy used", value: "Add" },
-        { label: "Successful recoveries", value: 5 },
-        { label: "Characters inserted", value: 12 },
+        { label: "Successful recoveries", value: lexStats().errors.count },
+        { label: "Count of inserted characters", value: lexStats().errors.added.length },
+        { label: "Characters inserted", value: [...new Set(lexStats().errors.added)].join(", ") },
       ];
     } else if (props.lexErrorMode() === "skip-until-found") {
       return [
         { label: "Strategy used", value: "Skip" },
-        { label: "Successful recoveries", value: 5 },
-        { label: "Characters skipped", value: 12 },
+        { label: "Successful recoveries", value: lexStats().errors.count },
+        { label: "Characters skipped", value: lexStats().errors.skipped },
       ];
     } else {
       return [{ label: "Strategy used", value: "None" }];
@@ -69,7 +74,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
         { label: "Successful recoveries", value: synStats().recoveries },
         { label: "Tokens inserted", value: synStats().tokensInserted },
       ];
-    } else if (props.syntaxErrorMode() === "ignore-until-found") {
+    } else if (props.syntaxErrorMode() === "skip-until-found") {
       return [
         { label: "Strategy used", value: "Skip" },
         { label: "Successful recoveries", value: synStats().recoveries },

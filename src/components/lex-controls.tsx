@@ -19,7 +19,7 @@ import { ControlsInfo } from "~/components/controls-info";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
-import { Lexer, LexError, newLexer } from "~/lib/lexer";
+import { Lexer, LexError, LexErrorRecovery, newLexer } from "~/lib/lexer";
 import { Caret, LexErrorMode, LexLog, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
@@ -31,6 +31,7 @@ interface LexControlsProps {
   setPointer: Setter<number>;
   setLogs: Setter<Array<LexLog>>;
   setTokens: Setter<Array<Token>>;
+  setLexErrorRecoveries: Setter<Array<LexErrorRecovery>>;
   caretPosition: Accessor<Caret>;
   error: Accessor<LexError | undefined>;
   setError: Setter<LexError | undefined>;
@@ -121,7 +122,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
       lexArgs.to = Math.min(currentIndex + moveDelta, text.length);
     }
 
-    const { tokens, logs, buffer, error } = lex(lexArgs);
+    const { tokens, logs, buffer, error, errorRecoveries } = lex(lexArgs);
 
     if (error) {
       props.setError(error);
@@ -136,6 +137,7 @@ export const LexControls: Component<LexControlsProps> = (props) => {
       setBuffer([]);
     }
     props.setTokens((prev) => [...prev, ...tokens]);
+    props.setLexErrorRecoveries((prev) => [...prev, ...errorRecoveries]);
     props.setPointer(lexArgs.to ?? text.length);
   };
 
@@ -338,6 +340,7 @@ function lex(args: LexArgs) {
   let buffer = new Array<string>();
   const tokens = new Array<Token>();
   const logs = new Array<LexLog>();
+  const errorRecoveries = new Array<LexErrorRecovery>();
 
   for (let i = from; i < to; i++) {
     const result = args.lexer.process({ char: args.text[i], line, linePos });
@@ -345,9 +348,12 @@ function lex(args: LexArgs) {
     logs.push(...result.logs);
     if (result.type === "ok") {
       tokens.push(...result.tokens);
+      if (result.errorRecovery) {
+        errorRecoveries.push(result.errorRecovery);
+      }
       buffer = [];
     } else if (result.type === "error") {
-      return { tokens, logs, buffer, error: result.error };
+      return { tokens, logs, buffer, error: result.error, errorRecoveries };
     } else {
       buffer.push(args.text[i]);
     }
@@ -367,9 +373,9 @@ function lex(args: LexArgs) {
     if (result.type === "ok") {
       tokens.push(...result.tokens);
     } else if (result.type === "error") {
-      return { tokens, logs, buffer, error: result.error };
+      return { tokens, logs, buffer, error: result.error, errorRecoveries };
     }
   }
 
-  return { tokens, logs, buffer };
+  return { tokens, logs, buffer, errorRecoveries };
 }
