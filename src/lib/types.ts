@@ -148,7 +148,7 @@ export type Rule = {
 
 export type Rules = Record<RuleNumber, Rule>;
 
-export type LexLogType = "init" | "transition" | "emit" | "error" | "eof";
+export type LexLogType = "init" | "transition" | "emit" | "error" | "eof" | "recover";
 
 export type SyntaxLogType = "init" | "expand" | "match" | "error" | "accept" | "skip" | "recover";
 

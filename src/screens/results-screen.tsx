@@ -38,7 +38,7 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
         { label: "Successful recoveries", value: 5 },
         { label: "Characters inserted", value: 12 },
       ];
-    } else if (props.lexErrorMode() === "ignore-until-found") {
+    } else if (props.lexErrorMode() === "skip-until-found") {
       return [
         { label: "Strategy used", value: "Skip" },
         { label: "Successful recoveries", value: 5 },

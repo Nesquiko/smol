@@ -7,7 +7,7 @@ interface LexerArgs {
   linePos: number;
 }
 
-type IllegalCharError = { stateLabel: string; char: string };
+type IllegalCharError = { stateLabel: string; char: string; expected?: string };
 
 export type LexError = { type: "illegal-char"; tokenPos?: TokenPosition; error: IllegalCharError };
 
@@ -29,8 +29,19 @@ export function newLexer(args: { startingLine: number; errorMode: LexErrorMode }
   lexer: Lexer;
   log: LexLog;
 } {
-  // TODO: luky - tu ti pride LexErrorMode ("no-errors", "skip-until-found", "add-missing")
-  const lexer = new CorrectLexer(args);
+  let lexer: Lexer;
+  switch (args.errorMode) {
+    case "no-errors":
+      lexer = new CorrectLexer(args);
+      break;
+    case "skip-until-found":
+      lexer = new SkipUntilFoundLexer(args);
+      break;
+    case "add-missing":
+      lexer = new AddIfMissingLexer(args);
+      break;
+  }
+
   const log: LexLog = {
     type: "init",
     message: "q0 - Lexer initialized",
@@ -48,8 +59,8 @@ interface TokenPosition {
 }
 
 class CorrectLexer implements Lexer {
-  private state: NonAcceptingState;
-  private tokenPos: TokenPosition | undefined;
+  protected state: NonAcceptingState;
+  protected tokenPos: TokenPosition | undefined;
 
   constructor(args: Partial<{ startingLine: number }>) {
     this.state = Q0;
@@ -66,14 +77,14 @@ class CorrectLexer implements Lexer {
           ...logs,
           {
             type: "error",
-            message: `Illegal character '${displayChar(args.char)}' passed to state ${this.state.label} (input ${args.line}:${args.linePos})`,
+            message: `Illegal character '${displayChar(args.char)}' passed to state ${this.state.label} (input ${displayPos(args)})`,
           },
         ],
       };
     }
     logs.push({
       type: "transition",
-      message: `Lexer moved from state ${this.state.label} to ${result.state.label} on char '${displayChar(args.char)}' (input ${args.line}:${args.linePos})`,
+      message: `Lexer moved from state ${this.state.label} to ${result.state.label} on char '${displayChar(args.char)}' (input ${displayPos(args)})`,
     });
 
     if (isAcceptingState(result.state)) {
@@ -87,7 +98,7 @@ class CorrectLexer implements Lexer {
       const token = result.state.emit(this.tokenPos);
       logs.push({
         type: "emit",
-        message: `State ${result.state.label} emitted token ${displayToken(token)}`,
+        message: `State '${result.state.label}' emitted token ${displayToken(token)}`,
       });
       tokens.push(token);
 
@@ -139,6 +150,61 @@ class CorrectLexer implements Lexer {
       message: "Finished processing of input",
     });
     return result;
+  }
+}
+
+class SkipUntilFoundLexer extends CorrectLexer {
+  constructor(args: Partial<{ startingLine: number }>) {
+    super(args);
+  }
+
+  process(args: LexerArgs, tokens?: Array<Token>, logs?: Array<LexLog>): ProcessResult {
+    const beforeState = this.state;
+    const result = super.process(args, tokens, logs);
+
+    if (result.type !== "error") return result;
+
+    result.logs.push({
+      type: "recover",
+      message: `error recovery: skipping char '${displayChar(args.char)}' (input ${displayPos(args)})`,
+    });
+
+    this.state = beforeState;
+    return { type: "none", logs: result.logs };
+  }
+}
+
+/**
+ * When there is not a concrete char that can be added, this will be used
+ */
+const RECOVERY_AMBIGUOUS_CHAR = "R";
+
+class AddIfMissingLexer extends CorrectLexer {
+  constructor(args: Partial<{ startingLine: number }>) {
+    super(args);
+  }
+
+  process(args: LexerArgs, tokens?: Array<Token>, logs?: Array<LexLog>): ProcessResult {
+    const beforeState = this.state;
+    const result = super.process(args, tokens, logs);
+    if (result.type !== "error") return result;
+
+    const expectedChar = result.error.error.expected ?? RECOVERY_AMBIGUOUS_CHAR;
+    result.logs.push({
+      type: "recover",
+      message: `error recovery: adding '${displayChar(expectedChar)}' at input ${displayPos(args)}`,
+    });
+
+    this.state = beforeState;
+    return super.process(
+      {
+        char: expectedChar,
+        line: args.line,
+        linePos: args.linePos - 1,
+      },
+      tokens,
+      result.logs,
+    );
   }
 }
 
@@ -512,7 +578,7 @@ const NumAccept = (num: string) => accepting("number-accept", { type: "NUMBER", 
 
 const AssignStart = nonAccepting(":", (char) => {
   if (char === "=") return Ok(AssignAccept);
-  return Err({ char, stateLabel: AssignStart.label });
+  return Err({ char, stateLabel: AssignStart.label, expected: "=" });
 });
 
 const AssignAccept = nonAccepting(":=", () => Ok(ASSIGN));
@@ -601,4 +667,8 @@ function displayChar(c: string) {
 
 function displayToken(t: Token) {
   return JSON.stringify(t);
+}
+
+function displayPos(args: LexerArgs) {
+  return `${args.line}:${args.linePos}`;
 }

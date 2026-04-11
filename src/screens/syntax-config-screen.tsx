@@ -22,14 +22,14 @@ const SYNTAX_ERROR_MODES: Array<ErrorModeData> = [
   } satisfies ErrorModeData,
   {
     mode: "skip-until-found",
-    title: "Skip Until Found",
+    title: "Skip until found",
     description:
       "Upon finding an unexpected token, this mode will skip all following tokens until it finds the corresponding one.",
     icon: HandIcon,
   } satisfies ErrorModeData,
   {
     mode: "add-missing",
-    title: "Add If Missing",
+    title: "Add if missing",
     description:
       "Upon finding an unexpected token, this mode will synthetically add the fitting token to continue.",
     icon: CirclePlusIcon,

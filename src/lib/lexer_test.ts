@@ -107,7 +107,7 @@ test("returns illegal-char error for standalone colon", () => {
   expect(error).toEqual({
     type: "illegal-char",
     tokenPos: { line: STARTING_LINE, tokenStart: 0, tokenEnd: 0 },
-    error: { char: "EOF", stateLabel: ":" },
+    error: { char: "EOF", stateLabel: ":", expected: "=" },
   });
 });
 

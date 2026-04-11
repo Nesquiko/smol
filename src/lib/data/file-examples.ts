@@ -65,4 +65,12 @@ export const FILE_EXAMPLES: Array<InputExample> = [
     intentionalError: true,
     path: "/examples/errors/operator-expected.smol",
   } satisfies InputExample,
+  {
+    id: "example-7",
+    name: "Lexer error recovery",
+    lineCount: 5,
+    characterCount: 49,
+    intentionalError: true,
+    path: "/examples/errors/lex-error-recovery.smol",
+  } satisfies InputExample,
 ] satisfies Array<InputExample>;

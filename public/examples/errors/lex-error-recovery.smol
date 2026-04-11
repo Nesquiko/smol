@@ -1,0 +1,5 @@
+BEGIN
+x : a + b;
+y := x - 1;
+0asdf := x - y;
+END

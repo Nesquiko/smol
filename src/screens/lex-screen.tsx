@@ -230,6 +230,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                               "text-primary-500": log.type === "transition",
                               "text-green-300": log.type === "eof",
                               "text-red-400": log.type === "error",
+                              "text-red-800": log.type === "recover",
                             }}
                           >
                             <span class="mr-4 ml-2 font-mono text-sm text-primary-500 select-none">

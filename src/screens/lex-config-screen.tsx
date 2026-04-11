@@ -29,7 +29,7 @@ const LEX_ERROR_MODES: Array<ErrorModeData> = [
   } satisfies ErrorModeData,
   {
     mode: "add-missing",
-    title: "Add If Missing",
+    title: "Add if missing",
     description:
       "Upon finding an unexpected character, this mode will synthetically add the fitting character to continue.",
     icon: CirclePlusIcon,
