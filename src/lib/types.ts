@@ -126,9 +126,9 @@ export type Margins = {
   left: number;
 };
 
-export type LexErrorMode = "no-errors" | "ignore-until-found" | "add-missing";
+export type LexErrorMode = "no-errors" | "skip-until-found" | "add-missing";
 
-export type SyntaxErrorMode = "no-errors" | "ignore-until-found" | "add-missing";
+export type SyntaxErrorMode = "no-errors" | "skip-until-found" | "add-missing";
 
 export type ErrorModeData = {
   mode: LexErrorMode | SyntaxErrorMode;

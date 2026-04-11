@@ -1,8 +1,9 @@
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
 import CircleCheckIcon from "lucide-solid/icons/circle-check";
+import CirclePlusIcon from "lucide-solid/icons/circle-plus";
 import CircleXIcon from "lucide-solid/icons/circle-x";
-import ShieldIcon from "lucide-solid/icons/shield";
+import HandIcon from "lucide-solid/icons/hand";
 import ShieldOffIcon from "lucide-solid/icons/shield-off";
 import { Accessor, Component, For, Setter, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -20,16 +21,18 @@ const LEX_ERROR_MODES: Array<ErrorModeData> = [
     icon: ShieldOffIcon,
   } satisfies ErrorModeData,
   {
-    mode: "ignore-until-found",
-    title: "Auto-fix error 1",
-    description: "This mode will fix error no. 1 for you automatically.",
-    icon: ShieldIcon,
+    mode: "skip-until-found",
+    title: "Skip until found",
+    description:
+      "Upon finding an unexpected character, this mode will skip all following character until it finds the corresponding one.",
+    icon: HandIcon,
   } satisfies ErrorModeData,
   {
     mode: "add-missing",
-    title: "Auto-fix error 2",
-    description: "This mode will fix error no. 2 for you automatically.",
-    icon: ShieldIcon,
+    title: "Add If Missing",
+    description:
+      "Upon finding an unexpected character, this mode will synthetically add the fitting character to continue.",
+    icon: CirclePlusIcon,
   } satisfies ErrorModeData,
 ] satisfies Array<ErrorModeData>;
 
@@ -41,9 +44,14 @@ interface LexConfigScreenProps {
 }
 
 export const LexConfigScreen: Component<LexConfigScreenProps> = (props: LexConfigScreenProps) => {
+  const toggleSelect = (mode: LexErrorMode | undefined) => {
+    const newMode: LexErrorMode | undefined = props.lexErrorMode() === mode ? undefined : mode;
+    props.setLexErrorMode(newMode);
+  };
+
   return (
     <div class="relative flex min-h-screen w-full flex-1 items-center justify-center">
-      <div class="flex w-full max-w-2xl flex-col items-center justify-center gap-12">
+      <div class="flex w-full max-w-3xl flex-col items-center justify-center gap-12">
         <div class="flex w-full flex-col items-center justify-center gap-3">
           <h1 class="text-4xl font-bold">Lexical configuration</h1>
           <p class="text-sm text-muted-foreground/60">
@@ -56,26 +64,22 @@ export const LexConfigScreen: Component<LexConfigScreenProps> = (props: LexConfi
           <For each={LEX_ERROR_MODES}>
             {(modeData: ErrorModeData) => (
               <Card
-                class="group relative mx-auto h-full w-full max-w-64 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
+                class="group relative mx-auto h-full min-h-46 w-full max-w-72 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
                 classList={{
                   "ring-primary-300 -translate-y-1": props.lexErrorMode() === modeData.mode,
                   "ring-transparent hover:ring-primary-300/30":
                     props.lexErrorMode() !== modeData.mode,
                 }}
-                onClick={() =>
-                  props.setLexErrorMode(
-                    props.lexErrorMode() === modeData.mode
-                      ? undefined
-                      : (modeData.mode as LexErrorMode),
-                  )
-                }
+                onClick={() => toggleSelect(modeData.mode)}
               >
                 <CardHeader>
                   <CardTitle class="flex flex-row items-center justify-start gap-2 tracking-normal select-none">
-                    <modeData.icon class="mb-0.5 inline-block size-5" />
+                    <modeData.icon class="mb-0.5 inline-block size-5 flex-shrink-0" />
                     {modeData.title}
                   </CardTitle>
-                  <CardDescription class="mt-4 select-none">{modeData.description}</CardDescription>
+                  <CardDescription class="mt-4 text-xs text-muted-foreground/60 select-none">
+                    {modeData.description}
+                  </CardDescription>
                 </CardHeader>
 
                 <Dynamic

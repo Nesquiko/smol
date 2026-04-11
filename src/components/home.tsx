@@ -60,6 +60,7 @@ export const Home = () => {
               fileContent={fileContent}
               tokens={tokens}
               setTokens={setTokens}
+              lexErrorMode={lexErrorMode}
               onContinue={() => setCurrentPage("syntax-config")}
               onBack={() => setCurrentPage("lex-config")}
             />

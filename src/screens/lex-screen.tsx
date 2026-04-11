@@ -9,8 +9,9 @@ import { NoData } from "~/components/no-data";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { LexError } from "~/lib/lexer";
-import { Caret, LexLog, Token } from "~/lib/types";
+import { Caret, LexErrorMode, LexLog, Token } from "~/lib/types";
 import { formatLog } from "~/lib/ui-utils";
 
 type LexTab = "code" | "logs";
@@ -19,6 +20,7 @@ interface LexScreenProps {
   fileContent: Accessor<string | undefined>;
   tokens: Accessor<Array<Token>>;
   setTokens: Setter<Array<Token>>;
+  lexErrorMode: Accessor<LexErrorMode | undefined>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -72,6 +74,8 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
 
   const padWidth = (): number => String(logs().length).length;
 
+  const errorsRecorded = (): boolean => !!error();
+
   return (
     <Show when={props.fileContent()}>
       {(content: Accessor<string>) => {
@@ -99,19 +103,37 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                 <TabsList class="flex h-full w-10 flex-col rounded-lg rounded-r-none border-r bg-primary-900">
                   <TabsTrigger
                     value="code"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
+                    class="group relative w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <CodeIcon class="inline-block size-4 rotate-90" />
                     Code
+                    <Show when={errorsRecorded()}>
+                      <Tooltip placement="left" openDelay={0} closeDelay={0}>
+                        <TooltipTrigger
+                          as="div"
+                          class="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 scale-70 rounded-full bg-red-300/30 transition-all duration-300 group-data-[selected]:scale-100 group-data-[selected]:bg-red-500/30 hover:bg-red-500"
+                        />
+                        <TooltipContent>Errors have been recorded</TooltipContent>
+                      </Tooltip>
+                    </Show>
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    class="w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
+                    class="group relative w-full flex-1 cursor-pointer items-center justify-start gap-2 rounded-lg data-selected:bg-primary-700 data-selected:shadow-none"
                     style={{ "writing-mode": "vertical-rl", rotate: "180deg" }}
                   >
                     <TerminalIcon class="inline-block size-4 rotate-90" />
                     Logs
+                    <Show when={errorsRecorded()}>
+                      <Tooltip placement="left" openDelay={0} closeDelay={0}>
+                        <TooltipTrigger
+                          as="div"
+                          class="absolute bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 scale-70 rounded-full bg-red-300/30 transition-all duration-300 group-data-[selected]:scale-100 group-data-[selected]:bg-red-500/30 hover:bg-red-500"
+                        />
+                        <TooltipContent>Errors have been recorded</TooltipContent>
+                      </Tooltip>
+                    </Show>
                   </TabsTrigger>
                 </TabsList>
 
@@ -206,7 +228,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
                               "text-foreground": log.type === "init",
                               "text-primary-300": log.type === "emit",
                               "text-primary-500": log.type === "transition",
-                              "text-green-300 font-bold": log.type === "eof",
+                              "text-green-300": log.type === "eof",
                               "text-red-400": log.type === "error",
                             }}
                           >
@@ -231,6 +253,7 @@ export const LexScreen: Component<LexScreenProps> = (props) => {
               setTokens={props.setTokens}
               caretPosition={caretPosition}
               error={error}
+              lexErrorMode={props.lexErrorMode}
               setError={setError}
               withNavigation={true}
               onBack={props.onBack}

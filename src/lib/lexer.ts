@@ -1,5 +1,5 @@
 import { assert } from "~/lib/assert";
-import { LexLog, Token, TokenType } from "~/lib/types";
+import { LexErrorMode, LexLog, Token, TokenType } from "~/lib/types";
 
 interface LexerArgs {
   char: string;
@@ -25,7 +25,11 @@ export interface Lexer {
   eof(args: Omit<LexerArgs, "char">): ProcessResult;
 }
 
-export function newLexer(args: { startingLine: number }): { lexer: Lexer; log: LexLog } {
+export function newLexer(args: { startingLine: number; errorMode: LexErrorMode }): {
+  lexer: Lexer;
+  log: LexLog;
+} {
+  // TODO: luky - tu ti pride LexErrorMode ("no-errors", "skip-until-found", "add-missing")
   const lexer = new CorrectLexer(args);
   const log: LexLog = {
     type: "init",

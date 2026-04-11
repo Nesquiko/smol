@@ -10,7 +10,8 @@ import FileInputIcon from "lucide-solid/icons/file-input";
 import SettingsIcon from "lucide-solid/icons/settings";
 import Settings2Icon from "lucide-solid/icons/settings-2";
 import ShrinkIcon from "lucide-solid/icons/shrink";
-import { Accessor, Component, For, Setter, Show } from "solid-js";
+import { Accessor, Component, createSignal, For, onMount, Setter, Show } from "solid-js";
+import { Motion } from "solid-motionone";
 
 import { InputCommand } from "~/components/input-command";
 import { Button } from "~/components/ui/button";
@@ -55,19 +56,47 @@ interface InputScreenProps {
 }
 
 export const InputScreen: Component<InputScreenProps> = (props: InputScreenProps) => {
+  const [activeStep, setActiveStep] = createSignal<number>(0);
+
+  onMount(() => {
+    const interval: NodeJS.Timeout = setInterval(() => {
+      setActiveStep((prev: number): number => (prev + 1) % PROCESS.length);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  });
+
   return (
     <div class="relative flex min-h-screen w-full flex-1 flex-col items-center justify-center">
       <div class="flex w-full flex-col items-center justify-center gap-32">
-        <div class="flex w-full flex-col items-center justify-center gap-10 opacity-50 lg:flex-row lg:gap-5">
+        <div class="flex w-full flex-col items-center justify-center gap-10 pt-24 opacity-50 lg:flex-row lg:gap-5 lg:pt-0">
           <For each={PROCESS}>
             {(item: ProcessItem, index: Accessor<number>) => (
               <>
-                <div class="relative flex size-20 items-center justify-center rounded-full bg-primary-700">
-                  <item.icon class="size-10 text-primary-500" />
-                  <span class="absolute bottom-0 left-1/2 w-26 -translate-x-1/2 translate-y-8 text-center text-sm font-medium text-primary-400">
+                <Motion.div
+                  class="relative flex size-20 items-center justify-center rounded-full transition-all duration-700"
+                  classList={{
+                    "scale-110 bg-primary-600": activeStep() === index(),
+                    "scale-100 bg-primary-700": activeStep() !== index(),
+                  }}
+                >
+                  <item.icon
+                    class="size-10 transition-colors duration-700"
+                    classList={{
+                      "text-primary-300": activeStep() === index(),
+                      "text-primary-500": activeStep() !== index(),
+                    }}
+                  />
+                  <span
+                    class="absolute bottom-0 left-1/2 w-26 -translate-x-1/2 translate-y-8 text-center text-sm font-medium text-primary-400 transition-colors duration-700"
+                    classList={{
+                      "text-primary-200": activeStep() === index(),
+                      "text-primary-400": activeStep() !== index(),
+                    }}
+                  >
                     {item.label}
                   </span>
-                </div>
+                </Motion.div>
                 <Show when={index() !== PROCESS.length - 1}>
                   <ArrowRightIcon class="hidden text-primary-700 lg:block" />
                   <ArrowDownIcon class="block text-primary-700 lg:hidden" />

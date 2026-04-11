@@ -191,7 +191,7 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
                           "text-primary-400": log.type === "expand",
                           "text-primary-300": log.type === "match",
                           "text-red-400": log.type === "error",
-                          "text-green-300 font-bold": log.type === "accept",
+                          "text-green-300": log.type === "accept",
                           "text-purple-200": log.type === "skip",
                           "text-yellow-200": log.type === "recover",
                         }}

@@ -164,7 +164,7 @@ test("tracks token positions correctly across a mixed input", async () => {
 function lex(input: string): { tokens: Token[]; error?: LexError } {
   let line = STARTING_LINE;
   let linePos = 0;
-  const lexer = newLexer({ startingLine: line }).lexer;
+  const lexer = newLexer({ startingLine: line, errorMode: "no-errors" }).lexer;
   const tokens = new Array<Token>();
 
   for (const char of input) {

@@ -20,7 +20,7 @@ import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAutoStep } from "~/lib/hooks/use-auto-step";
 import { Lexer, LexError, newLexer } from "~/lib/lexer";
-import { Caret, LexLog, Token } from "~/lib/types";
+import { Caret, LexErrorMode, LexLog, Token } from "~/lib/types";
 import { cn } from "~/lib/ui-utils";
 
 const WINDOW_SIZE: number = 11;
@@ -34,19 +34,23 @@ interface LexControlsProps {
   caretPosition: Accessor<Caret>;
   error: Accessor<LexError | undefined>;
   setError: Setter<LexError | undefined>;
+  lexErrorMode: Accessor<LexErrorMode | undefined>;
   withNavigation: boolean;
   onBack: () => void;
   onContinue: () => void;
   class?: string;
 }
 
-const STARTING_LINE = 1;
+const STARTING_LINE: number = 1;
 
 export const LexControls: Component<LexControlsProps> = (props) => {
   let lexer: Lexer | undefined = undefined;
 
   const initializeLexer = () => {
-    const { lexer, log } = newLexer({ startingLine: STARTING_LINE });
+    const { lexer, log } = newLexer({
+      startingLine: STARTING_LINE,
+      errorMode: props.lexErrorMode() ?? "no-errors",
+    });
     props.setLogs([log]);
     return lexer;
   };

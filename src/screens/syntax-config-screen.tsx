@@ -1,8 +1,9 @@
 import ChevronLeftIcon from "lucide-solid/icons/chevron-left";
 import ChevronRightIcon from "lucide-solid/icons/chevron-right";
 import CircleCheckIcon from "lucide-solid/icons/circle-check";
+import CirclePlusIcon from "lucide-solid/icons/circle-plus";
 import CircleXIcon from "lucide-solid/icons/circle-x";
-import ShieldIcon from "lucide-solid/icons/shield";
+import HandIcon from "lucide-solid/icons/hand";
 import ShieldOffIcon from "lucide-solid/icons/shield-off";
 import { Accessor, Component, For, Setter, Show } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -20,18 +21,18 @@ const SYNTAX_ERROR_MODES: Array<ErrorModeData> = [
     icon: ShieldOffIcon,
   } satisfies ErrorModeData,
   {
-    mode: "ignore-until-found",
-    title: "Ignore Until Found",
+    mode: "skip-until-found",
+    title: "Skip Until Found",
     description:
-      "Upon finding an unexpected token, this mode will ignore all following tokens until it finds the corresponding one.",
-    icon: ShieldIcon,
+      "Upon finding an unexpected token, this mode will skip all following tokens until it finds the corresponding one.",
+    icon: HandIcon,
   } satisfies ErrorModeData,
   {
     mode: "add-missing",
     title: "Add If Missing",
     description:
       "Upon finding an unexpected token, this mode will synthetically add the fitting token to continue.",
-    icon: ShieldIcon,
+    icon: CirclePlusIcon,
   } satisfies ErrorModeData,
 ] satisfies Array<ErrorModeData>;
 
@@ -45,6 +46,12 @@ interface SyntaxConfigScreenProps {
 export const SyntaxConfigScreen: Component<SyntaxConfigScreenProps> = (
   props: SyntaxConfigScreenProps,
 ) => {
+  const toggleSelect = (mode: SyntaxErrorMode | undefined) => {
+    const newMode: SyntaxErrorMode | undefined =
+      props.syntaxErrorMode() === mode ? undefined : mode;
+    props.setSyntaxErrorMode(newMode);
+  };
+
   return (
     <div class="relative flex min-h-screen w-full flex-1 items-center justify-center">
       <div class="flex w-full max-w-3xl flex-col items-center justify-center gap-12">
@@ -60,19 +67,13 @@ export const SyntaxConfigScreen: Component<SyntaxConfigScreenProps> = (
           <For each={SYNTAX_ERROR_MODES}>
             {(modeData: ErrorModeData) => (
               <Card
-                class="group relative mx-auto h-full min-h-40 w-full max-w-72 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
+                class="group relative mx-auto h-full min-h-46 w-full max-w-72 cursor-pointer overflow-hidden border-0 bg-primary-900 shadow-md ring-2 transition-all duration-300 hover:-translate-y-1"
                 classList={{
                   "ring-primary-300 -translate-y-1": props.syntaxErrorMode() === modeData.mode,
                   "ring-transparent hover:ring-primary-300/30":
                     props.syntaxErrorMode() !== modeData.mode,
                 }}
-                onClick={() =>
-                  props.setSyntaxErrorMode(
-                    props.syntaxErrorMode() === modeData.mode
-                      ? undefined
-                      : (modeData.mode as SyntaxErrorMode),
-                  )
-                }
+                onClick={() => toggleSelect(modeData.mode)}
               >
                 <CardHeader>
                   <CardTitle class="flex flex-row items-center justify-start gap-2 tracking-normal select-none">
