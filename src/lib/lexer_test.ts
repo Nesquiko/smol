@@ -154,7 +154,7 @@ test("resets to Q0 after accepting a token and reprocesses the same delimiter", 
 });
 
 test("tracks token positions correctly across a mixed input", async () => {
-  const input = await Bun.file("public/examples/complex-example.txt").text();
+  const input = await Bun.file("public/examples/complex-example.smol").text();
   const { tokens, error } = lex(input);
 
   expect(error).toBeUndefined();
