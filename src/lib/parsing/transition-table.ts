@@ -1,6 +1,6 @@
-import { ParseTable, Rules } from "~/lib/types";
+import { ParseTable, RuleNumber, Rules } from "~/lib/types";
 
-export const PARSE_TABLE: ParseTable = {
+export const DEFAULT_PARSE_TABLE: ParseTable = {
   program: { BEGIN: 1 },
   statement_list: { IDENT: 2, READ: 2, WRITE: 2, IF: 2 },
   "statement_list'": { IDENT: 4, READ: 4, WRITE: 4, IF: 4, END: 3 },
@@ -58,11 +58,22 @@ export const RULES: Rules = {
   34: { left: "bfactor", right: ["FALSE"] },
 };
 
+export const RULE_NUMBERS: Array<RuleNumber> = Object.keys(RULES)
+  .map((ruleNumber: string): number => Number(ruleNumber))
+  .sort((a: number, b: number): number => a - b);
+
+export const NON_TERMINAL_ORDER: Array<string> = Object.keys(DEFAULT_PARSE_TABLE);
+
+export const cloneParseTable = (table: ParseTable): ParseTable =>
+  Object.fromEntries(
+    Object.entries(table).map(([nonTerminal, transitions]) => [nonTerminal, { ...transitions }]),
+  );
+
 export const TERMINALS: Array<string> = Array.from(
   new Set(
-    Object.values(PARSE_TABLE).flatMap(
+    Object.values(DEFAULT_PARSE_TABLE).flatMap(
       (row: Record<string, number>): Array<string> => Object.keys(row),
     ),
   ),
 );
-export const NON_TERMINALS: Set<string> = new Set(Object.keys(PARSE_TABLE));
+export const NON_TERMINALS: Set<string> = new Set(NON_TERMINAL_ORDER);

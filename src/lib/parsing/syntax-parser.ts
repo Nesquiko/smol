@@ -1,8 +1,9 @@
 import { Accessor } from "solid-js";
 
 import { DOLLAR, EOF_TOKEN, EPSILON, PROGRAM, STEP_SAFETY_LIMIT } from "~/lib/data/constants";
-import { NON_TERMINALS, PARSE_TABLE, RULES } from "~/lib/parsing/transition-table";
+import { NON_TERMINALS, DEFAULT_PARSE_TABLE, RULES } from "~/lib/parsing/transition-table";
 import {
+  ParseTable,
   SyntaxParserStep,
   ParseTreeNode,
   Token,
@@ -35,6 +36,7 @@ export class SyntaxParser {
     private readonly tokens: Array<Token>,
     private readonly onResult: (result: Result) => void,
     private readonly errorMode: Accessor<SyntaxErrorMode | undefined> = () => "no-errors",
+    private readonly parseTable: ParseTable = DEFAULT_PARSE_TABLE,
   ) {}
 
   private formatLineWithCol(token: Token): string {
@@ -129,7 +131,7 @@ export class SyntaxParser {
   private findSyncTokenForNonTerminal(fromIndex: number, top: string): number {
     for (let i: number = fromIndex; i < this.input.length; i++) {
       if (this.input[i].type === DOLLAR) return -1;
-      if (PARSE_TABLE[top]?.[this.input[i].type] !== undefined) return i;
+      if (this.parseTable[top]?.[this.input[i].type] !== undefined) return i;
     }
     return -1;
   }
@@ -270,7 +272,7 @@ export class SyntaxParser {
   }
 
   private handleNonTerminal(top: string, lookahead: Token): boolean {
-    const ruleNumber: RuleNumber = PARSE_TABLE[top]?.[lookahead.type];
+    const ruleNumber: RuleNumber = this.parseTable[top]?.[lookahead.type];
 
     if (ruleNumber === undefined) {
       if (this.errorMode() === "skip-until-found") {
@@ -385,7 +387,7 @@ export class SyntaxParser {
   private recoverNonTerminalByInserting(top: string, lookahead: Token): boolean {
     this.hasErrors = true;
 
-    const validTypes: Array<string> = Object.keys(PARSE_TABLE[top] ?? {});
+    const validTypes: Array<string> = Object.keys(this.parseTable[top] ?? {});
     if (validTypes.length === 0) {
       this.pushError(
         `No rule for (${top}, ${lookahead.type}) and no recovery possible.`,

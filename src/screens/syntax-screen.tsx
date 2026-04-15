@@ -2,7 +2,7 @@ import GitBranchIcon from "lucide-solid/icons/git-branch";
 import MouseIcon from "lucide-solid/icons/mouse";
 import MoveIcon from "lucide-solid/icons/move";
 import TerminalIcon from "lucide-solid/icons/terminal";
-import { Accessor, Component, createEffect, createSignal, For, Show } from "solid-js";
+import { Accessor, Component, createEffect, createSignal, For, on, Setter, Show } from "solid-js";
 
 import { NoData } from "~/components/no-data";
 import { ParseTree } from "~/components/parse-tree";
@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/ui/tooltip";
 import {
   BufferType,
+  ParseTable,
   SyntaxParserStep,
   ParseTreeNode,
   StackType,
@@ -33,6 +34,8 @@ type SyntaxTab = "tree" | "logs";
 interface SyntaxScreenProps {
   tokens: Accessor<Array<Token>>;
   steps: Accessor<Array<SyntaxParserStep>>;
+  parseTable: Accessor<ParseTable>;
+  setParseTable: Setter<ParseTable>;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -52,6 +55,15 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
 
   let stackCardRef: HTMLDivElement | undefined;
   let logsContainerRef: HTMLDivElement | undefined;
+
+  createEffect(
+    on(
+      () => props.steps(),
+      () => {
+        setStepIndex(0);
+      },
+    ),
+  );
 
   createEffect(() => {
     logs();
@@ -209,7 +221,12 @@ export const SyntaxScreen: Component<SyntaxScreenProps> = (props) => {
           </Tabs>
         </Card>
 
-        <Stack stack={stack} cardRef={(el) => (stackCardRef = el)} />
+        <Stack
+          stack={stack}
+          parseTable={props.parseTable}
+          setParseTable={props.setParseTable}
+          cardRef={(el) => (stackCardRef = el)}
+        />
       </div>
 
       <SyntaxControls

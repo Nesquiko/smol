@@ -2,7 +2,9 @@ import { Accessor, createMemo, createSignal, Match, Switch } from "solid-js";
 
 import { LexErrorRecovery } from "~/lib/lexer";
 import { SyntaxParser } from "~/lib/parsing/syntax-parser";
+import { cloneParseTable, DEFAULT_PARSE_TABLE } from "~/lib/parsing/transition-table";
 import {
+  ParseTable,
   Screen,
   SyntaxParserStep,
   Result,
@@ -26,6 +28,9 @@ export const Home = () => {
   );
   const [tokens, setTokens] = createSignal<Array<Token>>([]);
   const [lexErrorRecoveries, setLexErrorRecoveries] = createSignal<Array<LexErrorRecovery>>([]);
+  const [parseTable, setParseTable] = createSignal<ParseTable>(
+    cloneParseTable(DEFAULT_PARSE_TABLE),
+  );
 
   const [result, setResult] = createSignal<Result>("unknown");
 
@@ -34,7 +39,8 @@ export const Home = () => {
   };
 
   const syntaxParserSteps: Accessor<Array<SyntaxParserStep>> = createMemo(
-    (): Array<SyntaxParserStep> => new SyntaxParser(tokens(), onResult, syntaxErrorMode).parse(),
+    (): Array<SyntaxParserStep> =>
+      new SyntaxParser(tokens(), onResult, syntaxErrorMode, parseTable()).parse(),
   );
 
   return (
@@ -83,6 +89,8 @@ export const Home = () => {
             <SyntaxScreen
               tokens={tokens}
               steps={syntaxParserSteps}
+              parseTable={parseTable}
+              setParseTable={setParseTable}
               onContinue={() => setCurrentPage("results")}
               onBack={() => setCurrentPage("syntax-config")}
             />
