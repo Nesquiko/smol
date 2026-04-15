@@ -1,15 +1,23 @@
 import type { Component, ComponentProps } from "solid-js";
 
-import { splitProps } from "solid-js";
+import { Show, splitProps } from "solid-js";
 
 import { cn } from "~/lib/ui-utils";
 
-const Table: Component<ComponentProps<"table">> = (props) => {
-  const [local, others] = splitProps(props, ["class"]);
+type TableProps = ComponentProps<"table"> & {
+  withContainer?: boolean;
+};
+
+const Table: Component<TableProps> = (props) => {
+  const [local, others] = splitProps(props, ["class", "withContainer"]);
+  const renderTable = () => (
+    <table class={cn("w-full caption-bottom text-sm", local.class)} {...others} />
+  );
+
   return (
-    <div class="relative w-full overflow-auto">
-      <table class={cn("w-full caption-bottom text-sm", local.class)} {...others} />
-    </div>
+    <Show when={local.withContainer !== false} fallback={renderTable()}>
+      <div class="relative w-full overflow-auto">{renderTable()}</div>
+    </Show>
   );
 };
 

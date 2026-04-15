@@ -103,8 +103,8 @@ export const TransitionTable: Component<TransitionTableProps> = (props) => {
         Transition Table
       </DialogTrigger>
 
-      <DialogContent class="h-full max-h-[90vh] w-full max-w-[90vw] overflow-auto bg-primary-900 p-0">
-        <div class="sticky top-0 z-30 border-b border-white/10 bg-primary-900/95 p-4 backdrop-blur">
+      <DialogContent class="flex h-full max-h-[90vh] w-full max-w-[90vw] flex-col overflow-hidden bg-primary-900 p-0">
+        <div class="border-b border-white/10 bg-primary-900/95 p-4 backdrop-blur">
           <DialogHeader class="gap-2 text-left">
             <DialogTitle>Transition Table</DialogTitle>
             <DialogDescription class="text-muted-foreground/80">
@@ -144,69 +144,71 @@ export const TransitionTable: Component<TransitionTableProps> = (props) => {
           </div>
         </div>
 
-        <fieldset
-          disabled={!isEditing()}
-          class="border-0 p-0"
-          classList={{ "opacity-70": !isEditing() }}
-        >
-          <Table class="w-full table-fixed border-collapse">
-            <TableHeader>
-              <TableRow>
-                <TableHead class="sticky left-0 z-20 w-30 border-r bg-primary-900 px-2 text-left">
-                  <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none" />
-                </TableHead>
+        <div class="min-h-0 flex-1 overflow-auto">
+          <fieldset
+            disabled={!isEditing()}
+            class="border-0 p-0"
+            classList={{ "opacity-70": !isEditing() }}
+          >
+            <Table withContainer={false} class="w-max min-w-full table-fixed border-collapse">
+              <TableHeader>
+                <TableRow>
+                  <TableHead class="sticky top-0 left-0 z-30 w-30 border-r bg-primary-900 px-2 text-left">
+                    <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none" />
+                  </TableHead>
 
-                <For each={TERMINALS}>
-                  {(header: string) => (
-                    <TableHead
-                      class="w-20 truncate border-r bg-primary-900 px-2 text-center hover:bg-white/5"
-                      title={header}
-                    >
-                      <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none">
-                        {header}
-                      </div>
-                    </TableHead>
+                  <For each={TERMINALS}>
+                    {(header: string) => (
+                      <TableHead
+                        class="sticky top-0 z-20 w-20 truncate border-r bg-primary-900 px-2 text-center hover:bg-white/5"
+                        title={header}
+                      >
+                        <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none">
+                          {header}
+                        </div>
+                      </TableHead>
+                    )}
+                  </For>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                <For each={NON_TERMINAL_ORDER}>
+                  {(nonTerminal: string) => (
+                    <TableRow>
+                      <TableCell class="sticky left-0 z-10 w-30 border-r bg-primary-900">
+                        <div class="overflow-hidden text-ellipsis whitespace-nowrap select-none">
+                          {nonTerminal}
+                        </div>
+                      </TableCell>
+
+                      <For each={TERMINALS}>
+                        {(terminal: string) => (
+                          <TableCell class="w-20 border-r bg-primary-800">
+                            <select
+                              class="h-8 w-full cursor-pointer rounded border border-transparent bg-primary-800 px-1 text-center text-xs font-bold focus-visible:border-primary-300 focus-visible:outline-none disabled:cursor-not-allowed"
+                              value={draftTable[nonTerminal]?.[terminal] ?? ""}
+                              onChange={(event) =>
+                                updateCell(nonTerminal, terminal, event.currentTarget.value)
+                              }
+                            >
+                              <option value="">-</option>
+                              <For each={RULE_NUMBERS}>
+                                {(ruleNumber: number) => (
+                                  <option value={String(ruleNumber)}>{ruleNumber}</option>
+                                )}
+                              </For>
+                            </select>
+                          </TableCell>
+                        )}
+                      </For>
+                    </TableRow>
                   )}
                 </For>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              <For each={NON_TERMINAL_ORDER}>
-                {(nonTerminal: string) => (
-                  <TableRow>
-                    <TableCell class="sticky left-0 z-10 w-30 border-r bg-primary-900 px-2">
-                      <div class="overflow-hidden text-ellipsis whitespace-nowrap select-none">
-                        {nonTerminal}
-                      </div>
-                    </TableCell>
-
-                    <For each={TERMINALS}>
-                      {(terminal: string) => (
-                        <TableCell class="w-20 border-r bg-primary-800 px-2">
-                          <select
-                            class="h-8 w-full cursor-pointer rounded border border-transparent bg-primary-800 px-1 text-center text-xs font-bold focus-visible:border-primary-300 focus-visible:outline-none disabled:cursor-not-allowed"
-                            value={draftTable[nonTerminal]?.[terminal] ?? ""}
-                            onChange={(event) =>
-                              updateCell(nonTerminal, terminal, event.currentTarget.value)
-                            }
-                          >
-                            <option value="">-</option>
-                            <For each={RULE_NUMBERS}>
-                              {(ruleNumber: number) => (
-                                <option value={String(ruleNumber)}>{ruleNumber}</option>
-                              )}
-                            </For>
-                          </select>
-                        </TableCell>
-                      )}
-                    </For>
-                  </TableRow>
-                )}
-              </For>
-            </TableBody>
-          </Table>
-        </fieldset>
+              </TableBody>
+            </Table>
+          </fieldset>
+        </div>
       </DialogContent>
     </Dialog>
   );
