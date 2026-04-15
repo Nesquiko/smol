@@ -1,14 +1,16 @@
 import GalleryVerticalIcon from "lucide-solid/icons/gallery-vertical";
-import { Accessor, Component, For } from "solid-js";
+import { Accessor, Component, For, Setter } from "solid-js";
 import { Motion } from "solid-motionone";
 
 import { TransitionTable } from "~/components/transition-table";
 import { Card } from "~/components/ui/card";
 import { DOLLAR } from "~/lib/data/constants";
-import { Dollar, NonTerminal, StackItem, StackType, TokenType } from "~/lib/types";
+import { Dollar, NonTerminal, ParseTable, StackItem, StackType, TokenType } from "~/lib/types";
 
 interface StackProps {
   stack: Accessor<StackType>;
+  parseTable: Accessor<ParseTable>;
+  setParseTable: Setter<ParseTable>;
   cardRef?: (el: HTMLDivElement) => void;
 }
 
@@ -54,7 +56,7 @@ export const Stack: Component<StackProps> = (props) => {
         <GalleryVerticalIcon class="absolute top-1/2 left-1/2 z-10 size-14 -translate-x-1/2 -translate-y-1/2 text-primary-500/15" />
       </Card>
 
-      <TransitionTable />
+      <TransitionTable parseTable={props.parseTable} setParseTable={props.setParseTable} />
     </div>
   );
 };

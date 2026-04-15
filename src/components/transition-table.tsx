@@ -1,7 +1,15 @@
-import { Accessor, createMemo, For } from "solid-js";
+import { Accessor, Component, createSignal, For, Setter } from "solid-js";
+import { createStore, reconcile } from "solid-js/store";
 
 import { Button } from "~/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "~/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -10,36 +18,82 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import { PARSE_TABLE, TERMINALS } from "~/lib/parsing/transition-table";
+import {
+  cloneParseTable,
+  DEFAULT_PARSE_TABLE,
+  NON_TERMINAL_ORDER,
+  RULE_NUMBERS,
+  TERMINALS,
+} from "~/lib/parsing/transition-table";
+import { ParseTable } from "~/lib/types";
 
-type TableRows = Array<{
-  cells: Array<string>;
-}>;
+type DraftCellValue = string;
 
-type TableDisplay = {
-  header: Array<string>;
-  rows: TableRows;
-};
+type TableDraft = Record<string, Record<string, DraftCellValue>>;
 
-export const TransitionTable = () => {
-  const table: Accessor<TableDisplay> = createMemo((): TableDisplay => {
-    const rows: TableRows = Object.entries(PARSE_TABLE).map(([nonTerminal, transitions]) => ({
-      cells: [
-        nonTerminal,
-        ...TERMINALS.map((t: string): string =>
-          transitions[t] !== undefined ? String(transitions[t]) : "",
-        ),
-      ],
-    }));
+interface TransitionTableProps {
+  parseTable: Accessor<ParseTable>;
+  setParseTable: Setter<ParseTable>;
+}
 
-    return {
-      header: ["", ...TERMINALS],
-      rows,
-    };
-  });
+const toDraftTable = (table: ParseTable): TableDraft =>
+  Object.fromEntries(
+    NON_TERMINAL_ORDER.map((nonTerminal: string) => [
+      nonTerminal,
+      Object.fromEntries(
+        TERMINALS.map((terminal: string) => [
+          terminal,
+          table[nonTerminal]?.[terminal] !== undefined ? String(table[nonTerminal][terminal]) : "",
+        ]),
+      ),
+    ]),
+  );
+
+const toParseTable = (draftTable: TableDraft): ParseTable =>
+  Object.fromEntries(
+    NON_TERMINAL_ORDER.map((nonTerminal: string) => [
+      nonTerminal,
+      Object.fromEntries(
+        TERMINALS.flatMap((terminal: string): Array<[string, number]> => {
+          const ruleNumber: string = draftTable[nonTerminal]?.[terminal] ?? "";
+          return ruleNumber === "" ? [] : [[terminal, Number(ruleNumber)]];
+        }),
+      ),
+    ]),
+  );
+
+export const TransitionTable: Component<TransitionTableProps> = (props) => {
+  const [open, setOpen] = createSignal(false);
+  const [isEditing, setIsEditing] = createSignal(false);
+  const [draftTable, setDraftTable] = createStore<TableDraft>(toDraftTable(DEFAULT_PARSE_TABLE));
+
+  const syncDraftTable = (table: ParseTable): void => {
+    setDraftTable(reconcile(toDraftTable(table)));
+  };
+
+  const handleOpenChange = (nextOpen: boolean): void => {
+    setOpen(nextOpen);
+    syncDraftTable(props.parseTable());
+    setIsEditing(false);
+  };
+
+  const updateCell = (nonTerminal: string, terminal: string, value: string): void => {
+    setDraftTable(nonTerminal, terminal, value);
+  };
+
+  const resetToDefault = (): void => {
+    syncDraftTable(DEFAULT_PARSE_TABLE);
+  };
+
+  const confirmChanges = (): void => {
+    const nextParseTable: ParseTable = cloneParseTable(toParseTable(draftTable));
+    props.setParseTable(nextParseTable);
+    syncDraftTable(nextParseTable);
+    setIsEditing(false);
+  };
 
   return (
-    <Dialog>
+    <Dialog open={open()} onOpenChange={handleOpenChange}>
       <DialogTrigger
         as={Button}
         variant="default"
@@ -49,53 +103,112 @@ export const TransitionTable = () => {
         Transition Table
       </DialogTrigger>
 
-      <DialogContent class="h-full max-h-[90vh] w-full max-w-[90vw] overflow-auto bg-primary-900 p-0">
-        <Table class="w-full table-fixed border-collapse">
-          <TableHeader>
-            <TableRow>
-              <For each={table().header}>
-                {(header: string, index: Accessor<number>) => (
-                  <TableHead
-                    class="border-r hover:bg-white/5"
-                    classList={{
-                      "px-2 w-30 text-left bg-primary-900 sticky left-0 z-20": index() === 0,
-                      "text-center px-2 w-20 truncate bg-primary-900": index() !== 0,
-                    }}
-                    title={header}
-                  >
-                    <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none">
-                      {header}
-                    </div>
-                  </TableHead>
-                )}
-              </For>
-            </TableRow>
-          </TableHeader>
+      <DialogContent class="flex h-full max-h-[90vh] w-full max-w-[90vw] flex-col overflow-hidden bg-primary-900 p-0">
+        <div class="border-b border-white/10 bg-primary-900/95 p-4 backdrop-blur">
+          <DialogHeader class="gap-2 text-left">
+            <DialogTitle>Transition Table</DialogTitle>
+            <DialogDescription class="text-muted-foreground/80">
+              Confirmed changes are used by the syntax parser. Closing the dialog discards any
+              unconfirmed edits.
+            </DialogDescription>
+          </DialogHeader>
 
-          <TableBody>
-            <For each={table().rows}>
-              {(row: { cells: Array<string> }) => (
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              class="cursor-pointer"
+              disabled={isEditing()}
+              onClick={() => setIsEditing(true)}
+            >
+              Edit table
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="cursor-pointer"
+              disabled={!isEditing()}
+              onClick={resetToDefault}
+            >
+              Reset to default
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              class="cursor-pointer"
+              disabled={!isEditing()}
+              onClick={confirmChanges}
+            >
+              Confirm
+            </Button>
+          </div>
+        </div>
+
+        <div class="min-h-0 flex-1 overflow-auto">
+          <fieldset
+            disabled={!isEditing()}
+            class="border-0 p-0"
+            classList={{ "opacity-70": !isEditing() }}
+          >
+            <Table withContainer={false} class="w-max min-w-full table-fixed border-collapse">
+              <TableHeader>
                 <TableRow>
-                  <For each={row.cells}>
-                    {(cell: string, index: Accessor<number>) => (
-                      <TableCell
-                        class="border-r hover:bg-white/5"
-                        classList={{
-                          "px-2 w-30 bg-primary-900 sticky left-0 z-10": index() === 0,
-                          "text-center px-2 w-20 font-bold truncate bg-primary-800": index() !== 0,
-                        }}
+                  <TableHead class="sticky top-0 left-0 z-30 w-30 border-r bg-primary-900 px-2 text-left">
+                    <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none" />
+                  </TableHead>
+
+                  <For each={TERMINALS}>
+                    {(header: string) => (
+                      <TableHead
+                        class="sticky top-0 z-20 w-20 truncate border-r bg-primary-900 px-2 text-center hover:bg-white/5"
+                        title={header}
                       >
-                        <div class="overflow-hidden text-ellipsis whitespace-nowrap select-none">
-                          {cell}
+                        <div class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap select-none">
+                          {header}
                         </div>
-                      </TableCell>
+                      </TableHead>
                     )}
                   </For>
                 </TableRow>
-              )}
-            </For>
-          </TableBody>
-        </Table>
+              </TableHeader>
+
+              <TableBody>
+                <For each={NON_TERMINAL_ORDER}>
+                  {(nonTerminal: string) => (
+                    <TableRow>
+                      <TableCell class="sticky left-0 z-10 w-30 border-r bg-primary-900">
+                        <div class="overflow-hidden text-ellipsis whitespace-nowrap select-none">
+                          {nonTerminal}
+                        </div>
+                      </TableCell>
+
+                      <For each={TERMINALS}>
+                        {(terminal: string) => (
+                          <TableCell class="w-20 border-r bg-primary-800">
+                            <select
+                              class="h-8 w-full cursor-pointer rounded border border-transparent bg-primary-800 px-1 text-center text-xs font-bold focus-visible:border-primary-300 focus-visible:outline-none disabled:cursor-not-allowed"
+                              value={draftTable[nonTerminal]?.[terminal] ?? ""}
+                              onChange={(event) =>
+                                updateCell(nonTerminal, terminal, event.currentTarget.value)
+                              }
+                            >
+                              <option value="">-</option>
+                              <For each={RULE_NUMBERS}>
+                                {(ruleNumber: number) => (
+                                  <option value={String(ruleNumber)}>{ruleNumber}</option>
+                                )}
+                              </For>
+                            </select>
+                          </TableCell>
+                        )}
+                      </For>
+                    </TableRow>
+                  )}
+                </For>
+              </TableBody>
+            </Table>
+          </fieldset>
+        </div>
       </DialogContent>
     </Dialog>
   );
