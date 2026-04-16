@@ -53,4 +53,6 @@ WRITE(foo,bar,baz);
 420;
 bar := baz -    15;
 x := -502;
+x:=(a+b);
+IF TRUE THEN WRITE(x);
 END

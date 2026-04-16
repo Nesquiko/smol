@@ -5,7 +5,7 @@ export const DEFAULT_PARSE_TABLE: ParseTable = {
   statement_list: { IDENT: 2, READ: 2, WRITE: 2, IF: 2 },
   "statement_list'": { IDENT: 4, READ: 4, WRITE: 4, IF: 4, END: 3 },
   statement: { IDENT: 5, READ: 6, WRITE: 7, IF: 8 },
-  else: { ELSE: 10, SEMI: 9 },
+  else: { ELSE: 10, SEMI: 9, END: 9, READ: 9, WRITE: 9, IDENT: 9 },
   id_list: { IDENT: 11 },
   "id_list'": { RPAREN: 12, COMMA: 13 },
   expr_list: { IDENT: 14, NUMBER: 14, LPAREN: 14 },

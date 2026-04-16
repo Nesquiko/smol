@@ -732,6 +732,26 @@ const ComplexExampleTokens = (line: number): Array<Token> =>
     { type: "NUMBER", value: "-502", line: line + 54, colStart: 5, colEnd: 8 },
     { type: "SEMI", value: ";", line: line + 54, colStart: 9, colEnd: 9 },
 
-    // Line 56: END
-    { type: "END", value: "END", line: line + 55, colStart: 0, colEnd: 2 },
+    // Line 56: x:=(a+b);
+    { type: "IDENT", value: "x", line: line + 55, colStart: 0, colEnd: 0 },
+    { type: "ASSIGN", value: ":=", line: line + 55, colStart: 1, colEnd: 2 },
+    { type: "LPAREN", value: "(", line: line + 55, colStart: 3, colEnd: 3 },
+    { type: "IDENT", value: "a", line: line + 55, colStart: 4, colEnd: 4 },
+    { type: "PLUS", value: "+", line: line + 55, colStart: 5, colEnd: 5 },
+    { type: "IDENT", value: "b", line: line + 55, colStart: 6, colEnd: 6 },
+    { type: "RPAREN", value: ")", line: line + 55, colStart: 7, colEnd: 7 },
+    { type: "SEMI", value: ";", line: line + 55, colStart: 8, colEnd: 8 },
+
+    // Line 57: IF TRUE THEN WRITE(x);
+    { type: "IF", value: "IF", line: line + 56, colStart: 0, colEnd: 1 },
+    { type: "TRUE", value: "TRUE", line: line + 56, colStart: 3, colEnd: 6 },
+    { type: "THEN", value: "THEN", line: line + 56, colStart: 8, colEnd: 11 },
+    { type: "WRITE", value: "WRITE", line: line + 56, colStart: 13, colEnd: 17 },
+    { type: "LPAREN", value: "(", line: line + 56, colStart: 18, colEnd: 18 },
+    { type: "IDENT", value: "x", line: line + 56, colStart: 19, colEnd: 19 },
+    { type: "RPAREN", value: ")", line: line + 56, colStart: 20, colEnd: 20 },
+    { type: "SEMI", value: ";", line: line + 56, colStart: 21, colEnd: 21 },
+
+    // Line 58: END
+    { type: "END", value: "END", line: line + 57, colStart: 0, colEnd: 2 },
   ] satisfies Array<Token>;

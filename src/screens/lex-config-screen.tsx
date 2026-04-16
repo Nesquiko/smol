@@ -24,7 +24,7 @@ const LEX_ERROR_MODES: Array<ErrorModeData> = [
     mode: "skip-until-found",
     title: "Skip until found",
     description:
-      "Upon finding an unexpected character, this mode will skip all following character until it finds the corresponding one.",
+      "Upon finding an unexpected character, this mode will skip all following characters until it finds the corresponding one.",
     icon: HandIcon,
   } satisfies ErrorModeData,
   {
