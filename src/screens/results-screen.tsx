@@ -203,9 +203,6 @@ export const ResultsScreen: Component<ResultsScreenProps> = (props) => {
               {(s) => <ResultStatCard label={s.label} value={s.value} dim={s.value === 0} />}
             </For>
           </div>
-          <p class="text-xs text-muted-foreground/40 italic">
-            TODO: luky - lexical error recovery not yet implemented, showing dummy data
-          </p>
         </div>
 
         <div class="flex w-full flex-col gap-3">
