@@ -1,0 +1,146 @@
+flowchart LR
+  classDef error fill:#ffe0e0,stroke:#d33,color:#900;
+  classDef final fill:#e1f7e1,stroke:#2a8f2a,color:#145214;
+
+  Q0([Q0])
+  ERR([illegal char])
+
+  Q0 -->|whitespace / EOF| Q0
+  Q0 -->|other| ERR
+
+  Q0 -->|letter| IDENT
+  Q0 -->|1-9| NUM
+
+  Q0 -->|B| B1
+  Q0 -->|A| A1
+  Q0 -->|E| E1
+  Q0 -->|F| F1
+  Q0 -->|I| I1
+  Q0 -->|N| N1
+  Q0 -->|O| O1
+  Q0 -->|R| R1
+  Q0 -->|T| T1
+  Q0 -->|W| W1
+
+  Q0 -->|colon| COLON
+  Q0 -->|semicolon| SEMI
+  Q0 -->|lparen| LPAREN
+  Q0 -->|rparen| RPAREN
+  Q0 -->|comma| COMMA
+  Q0 -->|plus| PLUS
+  Q0 -->|minus| MINUS
+
+  subgraph Tokens[Tokens]
+    direction TB
+
+    B1[B] -->|E| B2[BE]
+    B2 -->|G| B3[BEG]
+    B3 -->|I| B4[BEGI]
+    B4 -->|N / boundary| BEGIN([BEGIN])
+    B1 -->|alnum| IDENT
+    B2 -->|alnum| IDENT
+    B3 -->|alnum| IDENT
+    B4 -->|alnum| IDENT
+
+    A1[A] -->|N| A2[AN]
+    A2 -->|D / boundary| AND([AND])
+    A1 -->|alnum| IDENT
+    A2 -->|alnum| IDENT
+
+    E1[E] -->|N| E2[EN]
+    E2 -->|D / boundary| END([END])
+    E1 -->|L| EL1[EL]
+    EL1 -->|S| EL2[ELS]
+    EL2 -->|E / boundary| ELSE([ELSE])
+    E1 -->|alnum| IDENT
+    E2 -->|alnum| IDENT
+    EL1 -->|alnum| IDENT
+    EL2 -->|alnum| IDENT
+
+    F1[F] -->|A| F2[FA]
+    F2 -->|L| F3[FAL]
+    F3 -->|S| F4[FALS]
+    F4 -->|E / boundary| FALSE([FALSE])
+    F1 -->|alnum| IDENT
+    F2 -->|alnum| IDENT
+    F3 -->|alnum| IDENT
+    F4 -->|alnum| IDENT
+
+    I1[I] -->|F / boundary| IF([IF])
+    I1 -->|alnum| IDENT
+
+    N1[N] -->|O| N2[NO]
+    N2 -->|T / boundary| NOT([NOT])
+    N1 -->|alnum| IDENT
+    N2 -->|alnum| IDENT
+
+    O1[O] -->|R / boundary| OR([OR])
+    O1 -->|alnum| IDENT
+
+    R1[R] -->|E| R2[RE]
+    R2 -->|A| R3[REA]
+    R3 -->|D / boundary| READ([READ])
+    R1 -->|alnum| IDENT
+    R2 -->|alnum| IDENT
+    R3 -->|alnum| IDENT
+
+    T1[T] -->|H| T2[TH]
+    T2 -->|E| T3[THE]
+    T3 -->|N / boundary| THEN([THEN])
+    T1 -->|R| TR1[TR]
+    TR1 -->|U| TR2[TRU]
+    TR2 -->|E / boundary| TRUE([TRUE])
+    T1 -->|alnum| IDENT
+    T2 -->|alnum| IDENT
+    T3 -->|alnum| IDENT
+    TR1 -->|alnum| IDENT
+    TR2 -->|alnum| IDENT
+
+    W1[W] -->|R| W2[WR]
+    W2 -->|I| W3[WRI]
+    W3 -->|T| W4[WRIT]
+    W4 -->|E / boundary| WRITE([WRITE])
+    W1 -->|alnum| IDENT
+    W2 -->|alnum| IDENT
+    W3 -->|alnum| IDENT
+    W4 -->|alnum| IDENT
+  end
+
+  subgraph Legend[Note]
+    direction TB
+    NOTE[[boundary = non-alnum / non-digit]]
+  end
+
+  subgraph Identifiers[Identifiers]
+    direction TB
+    IDENT([IDENT]) -->|alnum| IDENT
+    IDENT -->|boundary| IDENT_OUT([emit IDENT])
+  end
+
+  subgraph Numbers[Numbers]
+    direction TB
+    NUM([NUMBER]) -->|digit| NUM
+    NUM -->|boundary| NUM_OUT([emit NUMBER])
+  end
+
+  subgraph Symbols[Single char tokens]
+    direction TB
+    COLON[":"]
+    COLON -->|equals| ASSIGN([ASSIGN])
+    COLON -->|other| ERR
+
+    SEMI[";"] -->|any| SEMI_OUT([SEMI])
+    LPAREN["("] -->|any| LPAREN_OUT([LPAREN])
+    RPAREN[")"] -->|any| RPAREN_OUT([RPAREN])
+    COMMA[","] -->|any| COMMA_OUT([COMMA])
+
+    PLUS["+"] -->|digit 1-9| NUM
+    PLUS -->|other| PLUS_OUT([PLUS])
+
+    MINUS["-"] -->|digit 1-9| NUM
+    MINUS -->|other| MINUS_OUT([MINUS])
+  end
+
+  class ERR error;
+  class BEGIN,AND,END,ELSE,FALSE,IF,NOT,OR,READ,THEN,TRUE,WRITE,ASSIGN,SEMI_OUT,LPAREN_OUT,RPAREN_OUT,COMMA_OUT,PLUS_OUT,MINUS_OUT,IDENT_OUT,NUM_OUT final;
+

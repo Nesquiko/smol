@@ -153,7 +153,7 @@ test("resets to Q0 after accepting a token and reprocesses the same delimiter", 
   expect(tokens).toEqual([{ type: "IDENT", value: "BEGINX", line, colStart: 0, colEnd: 5 }]);
 });
 
-test("tracks token positions correctly across a mixed input", async () => {
+test("complex example", async () => {
   const input = await Bun.file("public/examples/complex-example.smol").text();
   const { tokens, error } = lex(input);
 
