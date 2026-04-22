@@ -1,0 +1,6 @@
+BEGIN
+READ(a,b);
+x:=a+b;
+y:=x-1;
+IF TRUE THEN WRITE(y); ELSE WRITE(a,b);
+END

@@ -1,0 +1,58 @@
+BEGIN
+READ(a,b,c,d,e);
+x:=a+b;
+y:=x-c;
+z:=y+10;
+total:=z+d;
+temp:=total-e;
+WRITE(a,b,c,d,e);
+WRITE(x,y,z,total,temp);
+IF TRUE THEN WRITE(x); ELSE WRITE(y);
+IF FALSE THEN READ(m); ELSE WRITE(z);
+alpha:=1;
+beta:=alpha+2;
+gamma:=beta+3;
+delta:=gamma-4;
+epsilon:=delta+5;
+WRITE(alpha,beta,gamma,delta,epsilon);
+IF NOT FALSE THEN WRITE(epsilon); ELSE WRITE(alpha);
+u:=1;
+v:=u+2;
+w:=v+3;
+p:=w-4;
+q:=p+5;
+r:=q-6;
+s:=r+7;
+t:=s-8;
+WRITE(u,v,w,p,q,r,s,t);
+IF TRUE OR FALSE THEN WRITE(t); ELSE WRITE(u);
+left:=1;
+right:=2;
+mid:=left+right;
+value:=mid+3;
+result:=value-1;
+WRITE(left,right,mid,value,result);
+IF (TRUE AND NOT FALSE) THEN WRITE(result); ELSE WRITE(mid);
+n1:=1;
+n2:=n1+1;
+n3:=n2+1;
+n4:=n3+1;
+n5:=n4+1;
+n6:=n5+1;
+n7:=n6+1;
+n8:=n7+1;
+n9:=n8+1;
+WRITE(n1,n2,n3,n4,n5,n6,n7,n8,n9);
+IF ((TRUE)) THEN WRITE(n9); ELSE WRITE(n1);
+foo:=1;
+bar:=foo+2;
+baz:=bar-1;
+WRITE(foo,bar,baz);
+  n10   :=    n9
++
+420;
+bar := baz -    15;
+x := -502;
+x:=(a+b);
+IF TRUE THEN WRITE(x);
+END

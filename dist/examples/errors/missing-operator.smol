@@ -1,0 +1,5 @@
+BEGIN
+READ(a, b);
+x := a b;
+WRITE(x);
+END
